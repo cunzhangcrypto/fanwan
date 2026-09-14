@@ -4,6 +4,10 @@
 
 一个有点重庆味的开源在线饭碗儿。
 
+<p align="center">
+  <img src="static/img/pic.png" alt="饭碗儿首页" width="720" />
+</p>
+
 没得啥子复杂东西。
 
 你可以：
