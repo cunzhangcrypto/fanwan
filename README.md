@@ -104,7 +104,7 @@
 ├── scripts/
 │   ├── download-font.mjs      # 下载中文字体到本地
 │   └── upload-font.mjs        # 上传字体到 R2
-└── .github/workflows/deploy.yml  # push main 自动迁移 D1 + 部署
+└── .github/workflows/deploy.yml  # 手动 Run workflow 才迁移 D1 + 部署（不自动触发）
 ```
 
 ## 🚀 本地跑起来
@@ -172,7 +172,7 @@ npm run dev
 
 ### 4. 触发部署
 
-自己仓库 → Actions → 左侧 **Deploy** → **Run workflow**（或随便 push 一次）。
+自己仓库 → Actions → 左侧 **Deploy** → **Run workflow**。
 
 等 1-2 分钟，Actions 全绿就部署好了：自动完成建表 → 传字体 → 设密钥 → 上线。
 

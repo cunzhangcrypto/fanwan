@@ -1,10 +1,8 @@
-# 饭碗儿 一键部署：push main 或手动 Run workflow 即完成
+# 饭碗儿 手动部署：不自动触发，每次在 Actions 页手动 Run workflow
 # 全部配置走 GitHub Secrets，部署者不需要本地装 wrangler / 命令行操作
 name: Deploy
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
