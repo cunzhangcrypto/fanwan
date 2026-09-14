@@ -14,7 +14,6 @@ const env = (k, fb) => {
 const map = {
   database_id: env("D1_DATABASE_ID"),
   TURNSTILE_SITE_KEY: env("TURNSTILE_SITE_KEY"),
-  SITE_URL: env("SITE_URL"),
   bucket_name: env("R2_BUCKET"),
 };
 

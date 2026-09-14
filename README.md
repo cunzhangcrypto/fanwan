@@ -167,7 +167,8 @@ npm run dev
 | `TURNSTILE_SECRET_KEY` | Turnstile Secret Key |
 | `SERVER_SECRET` | 随便编一串乱码（IP 哈希盐） |
 | `ADMIN_KEY` | 随便编一串（后台钥匙） |
-| `SITE_URL` | 可以先不填，部署完拿到自己的域名再补 |
+
+> `SITE_URL` 不用配：分享图链接自动取当前访问域名生成，绑自定义域名也自动正确。
 
 ### 4. 触发部署
 
@@ -177,11 +178,9 @@ npm run dev
 
 ### 5. 打开验证
 
-部署日志里会出现 `https://fanwaner.你的用户名.workers.dev`，打开就能用了。
+部署日志里会出现 `https://fanwaner.你的用户名.workers.dev`，打开就能用了。OG 分享图链接会自动用当前域名拼，不用额外配置。
 
-> **补 SITE_URL**：拿到自己的 workers.dev 域名后，回到仓库把 `SITE_URL` Secret 改成 `https://fanwaner.你的用户名.workers.dev`，再跑一次 Actions，这样微信/Telegram 分享时的 OG 图链接才是你自己的域名。
-
-> 想绑自己的域名：Workers → fanwaner → Settings → Domains & Routes → Add 自定义域名，再把 `SITE_URL` 改成它，重跑一次 Actions。
+> 想绑自己的域名：Workers → fanwaner → Settings → Domains & Routes → Add 自定义域名即可，分享链接同样自动跟着新域名走。
 
 ---
 
@@ -223,7 +222,8 @@ routes = [{ pattern = "fanwaner.example.com", custom_domain = true }]
 | `MAX_AMOUNT_YUAN` | `[vars]` | 金额上限（默认 1000 元） |
 | `MAX_UPLOAD_BYTES` | `[vars]` | 图片上传上限（默认 2MB） |
 | `R2_FONT_KEY` | `[vars]` | OG 字体在 R2 的 key |
-| `SITE_URL` | `[vars]` | 站点域名，OG 图链接用它拼 |
+
+> OG 图链接不需要 `SITE_URL`：`assets.js` 直接用当前请求域名拼，部署/绑域名都自动正确。
 
 ## 🔌 API
 

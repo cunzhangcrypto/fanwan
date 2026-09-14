@@ -32,7 +32,9 @@ export async function serveBowHtml(env, request, pathSlug) {
   }
 
   const bowl = await getBowlBySlug(env.DB, slug).catch(() => null);
-  const siteUrl = env.SITE_URL || "";
+  // OG 链接用当前请求域名动态拼：爬虫抓的 host 就是部署域名，绑不绑自定义域名都自动正确，
+  // 不需要配 SITE_URL。
+  const siteUrl = new URL(request.url).origin;
   const percent = bowl
     ? Math.min(100, Math.round((bowl.current_cents / bowl.target_cents) * 100))
     : 0;
@@ -93,7 +95,7 @@ export async function serveStatic(env, request) {
   // 首页 OG meta：index.html 里是占位符，这里注入静态值，莫让爬虫看到 __OG_TITLE__ 字面量
   if (url.pathname === "/" && res.headers.get("Content-Type")?.includes("text/html")) {
     const html = await res.text();
-    const siteUrl = env.SITE_URL || "";
+    const siteUrl = new URL(request.url).origin;
     const out = html
       .replaceAll("__OG_TITLE__", escapeAttr("饭碗儿 —— 没得饭吃啷个办？先把饭碗儿摆出来嘛。"))
       .replaceAll("__OG_DESC__", escapeAttr("互联网人的在线饭碗儿。摆个饭碗儿，等个耿直人投一口。"))

@@ -20,13 +20,12 @@ jobs:
 
       - run: npm ci
 
-      # 从 GitHub Secrets 生成线上配置（D1 库 ID / Turnstile / SITE_URL / R2 桶名）
+      # 从 GitHub Secrets 生成线上配置（D1 库 ID / Turnstile / R2 桶名）
       - name: Generate prod config
         run: node scripts/gen-prod-config.mjs
         env:
           D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
-          SITE_URL: ${{ secrets.SITE_URL }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
 
       # 同步 D1 表结构（4 个迁移）
