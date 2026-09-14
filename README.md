@@ -135,7 +135,57 @@ npm run dev
 
 > 本地开发时 Turnstile 没配 secret 会自动跳过人机验证，方便调试；线上必须配。
 
-## ☁️ 部署到 Cloudflare
+## ☁️ 部署到 Cloudflare（纯线上，小白友好）
+
+**全程网页操作，不用装任何东西、不用敲一行命令。**
+
+### 1. Fork 仓库
+
+到 [GitHub 仓库页](https://github.com/cunzhangcrypto/fanwan) 点右上角 **Fork**，Fork 到自己的账号下。
+
+### 2. Cloudflare 控制台准备（约 5 分钟，全网页点）
+
+打开 [dash.cloudflare.com](https://dash.cloudflare.com)：
+
+1. **创建 D1 数据库**：Workers & Pages → D1 → Create database，名字随便（如 `fanwaner`）→ 创建后**复制 Database ID**
+2. **创建 R2 桶**：R2 → Create bucket，名字 `fanwaner-assets`（可改）
+3. **创建 Turnstile 站点**：Turnstile → Add site，域名先填 `*` 或你的 workers.dev 域名 → 拿到 **Site Key** 和 **Secret Key**
+4. **创建 API Token**：右上头像 → My Profile → API Tokens → Create Token → 选模板 **Edit Cloudflare Workers** → Create → **复制 Token**
+5. **复制 Account ID**：控制台首页右下角
+
+### 3. GitHub 仓库填 Secrets
+
+在自己 Fork 的仓库 → Settings → Secrets and variables → Actions → **New repository secret**，加 9 个：
+
+| Secret 名 | 填啥子 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | 第 2 步的 API Token |
+| `CLOUDFLARE_ACCOUNT_ID` | 第 2 步的 Account ID |
+| `D1_DATABASE_ID` | 第 2 步的 Database ID |
+| `R2_BUCKET` | 桶名（默认 `fanwaner-assets`） |
+| `TURNSTILE_SITE_KEY` | Turnstile Site Key |
+| `TURNSTILE_SECRET_KEY` | Turnstile Secret Key |
+| `SERVER_SECRET` | 随便编一串乱码（IP 哈希盐） |
+| `ADMIN_KEY` | 随便编一串（后台钥匙） |
+| `SITE_URL` | 可以先不填，部署完拿到自己的域名再补 |
+
+### 4. 触发部署
+
+自己仓库 → Actions → 左侧 **Deploy** → **Run workflow**（或随便 push 一次）。
+
+等 1-2 分钟，Actions 全绿就部署好了：自动完成建表 → 传字体 → 设密钥 → 上线。
+
+### 5. 打开验证
+
+部署日志里会出现 `https://fanwaner.你的用户名.workers.dev`，打开就能用了。
+
+> **补 SITE_URL**：拿到自己的 workers.dev 域名后，回到仓库把 `SITE_URL` Secret 改成 `https://fanwaner.你的用户名.workers.dev`，再跑一次 Actions，这样微信/Telegram 分享时的 OG 图链接才是你自己的域名。
+
+> 想绑自己的域名：Workers → fanwaner → Settings → Domains & Routes → Add 自定义域名，再把 `SITE_URL` 改成它，重跑一次 Actions。
+
+---
+
+## 🧑‍💻 命令行部署（进阶，作者/开发者用）
 
 ```bash
 # 1. 三个密钥（不要写进仓库）
@@ -161,19 +211,6 @@ npm run deploy
 ```toml
 routes = [{ pattern = "fanwaner.example.com", custom_domain = true }]
 ```
-
-### GitHub Actions 自动部署
-
-仓库 Settings → Secrets and variables → Actions 加两个 Secret：
-
-| Secret | 值 |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API Token（权限：Workers Scripts Edit + D1 Edit） |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 账号 ID |
-
-push 到 main 会自动：`d1 migrations apply --remote` → `deploy`。
-
-> 注意：CI 只部署代码，三个 Secret 和字体还是要手动搞一次（上面 1、3 步）。
 
 ## 🔑 环境变量
 
