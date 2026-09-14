@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍚 饭碗儿后台</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <img src="/img/logo.svg" alt="饭碗儿 Logo" />
+      <span>饭碗儿后台<small>今天都有哪些兄弟伙端饭过来了？</small></span>
+    </a>
+    <nav class="nav">
+      <a class="btn btn-sm btn-ghost" href="/">👀 回前台</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="login-box" class="card-panel" style="max-width:420px; margin-top:60px;">
+      <h2>后台钥匙</h2>
+      <p class="lead">输入管理密钥（ADMIN_KEY）才进得到后台。</p>
+      <div class="field">
+        <input type="password" id="admin-key" placeholder="后台钥匙" />
+      </div>
+      <button class="btn btn-primary" id="btn-login" style="width:100%;">进后台</button>
+      <div class="form-error" id="login-error" style="margin-top:12px;"></div>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+      <h2 class="section-title">这些是刚刚有人端过来的饭 <small>投喂记录要审核了才显示</small></h2>
+      <div id="pending-wrap"></div>
+
+      <h2 class="section-title" style="margin-top:46px;">端走饭碗儿</h2>
+      <div class="card-panel" style="max-width:640px; margin:0;">
+        <div class="field">
+          <label for="bowl-slug">饭碗儿地址（slug）</label>
+          <input type="text" id="bowl-slug" placeholder="比如：a1b2c3d4" />
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btn-find-bowl">查一哈</button>
+        </div>
+        <div id="bowl-result"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>🍚 饭碗儿后台 · 悄悄进来，莫声张</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

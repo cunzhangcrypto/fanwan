@@ -1,0 +1,20 @@
+# 依赖与构建产物
+node_modules/
+.wrangler/
+dist/
+
+# 本地密钥（复制 .env.example 为 .dev.vars 后填写）
+.dev.vars
+
+# OG 字体（16MB，跑 scripts/download-font.mjs 现下，不提交）
+fonts/
+
+# Trae 本地文档（.trae/ 里的方案文档不进仓库）
+.trae/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log

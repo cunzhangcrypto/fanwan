@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>摆个饭碗儿嘛 —— 饭碗儿</title>
+  <meta name="description" content="有啥子困难说啥子困难，莫整虚的。把饭碗儿摆起，等个耿直人。" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <img src="/img/logo.svg" alt="饭碗儿 Logo" />
+      <span>饭碗儿<small>没得饭吃啷个办？先把饭碗儿摆出来嘛。</small></span>
+    </a>
+    <nav class="nav">
+      <a class="btn btn-sm btn-ghost" href="/">👀 去瞅哈别人的饭碗</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card-panel">
+      <h2>🍚 摆个饭碗儿嘛</h2>
+      <p class="lead">有啥子困难说啥子困难，莫整虚的。</p>
+
+      <div class="form-error" id="form-error"></div>
+
+      <div class="field">
+        <label for="title">饭碗儿喊啥子？<span class="req">*</span></label>
+        <input type="text" id="title" maxlength="50" placeholder="比如：今天想吃碗重庆小面" />
+        <div class="char-count"><span id="title-count">0</span>/50</div>
+      </div>
+
+      <div class="field">
+        <label for="want">想吃啥子？<span class="req">*</span></label>
+        <textarea id="want" maxlength="200" placeholder="说清楚点嘛，大家才晓得啷个投。比如：刚毕业手头紧，就想吃碗热乎的小面，加个蛋。"></textarea>
+        <div class="char-count"><span id="want-count">0</span>/200</div>
+      </div>
+
+      <div class="field">
+        <label for="reason">为啥子要吃？<span class="req">*</span></label>
+        <textarea id="reason" maxlength="500" placeholder="服务器要续费了 / 失业了先过渡一哈 / 就想找人请吃顿饭，扯个实话。" style="min-height:110px;"></textarea>
+        <div class="char-count"><span id="reason-count">0</span>/500</div>
+      </div>
+
+      <div class="field">
+        <label for="targetAmount">目标多少？<span class="req">*</span><span class="hint">上限 1000，人嘛，胃口莫太大。</span></label>
+        <input type="number" id="targetAmount" min="1" max="1000" step="0.01" placeholder="比如：30" />
+      </div>
+
+      <div class="field">
+        <label for="deadline">啷个时候收碗？<span class="hint">不填就一直等到。</span></label>
+        <input type="date" id="deadline" />
+      </div>
+
+      <div class="field">
+        <label>啷个收？<span class="hint">可选可不选，一个都不留，就当纯讨口饭吃。</span></label>
+        <div class="pay-tabs" id="pay-tabs">
+          <button type="button" class="pay-tab active" data-pay="wechat">微信</button>
+          <button type="button" class="pay-tab" data-pay="alipay">支付宝</button>
+          <button type="button" class="pay-tab" data-pay="usdt">USDT(TRC20)</button>
+          <button type="button" class="pay-tab" data-pay="usdt_bep20">USDT(BEP20)</button>
+        </div>
+
+        <div id="pay-wechat" class="field hidden">
+          <label>微信收款码 <span class="hint">图莫得传的话，投的人扫不到哦</span></label>
+          <div class="upload-box" data-upload="wechat_qr">
+            <div class="thumb" data-thumb>＋</div>
+            <div class="tip"><strong>传一张微信收款码</strong>自动转成 webp，2MB 以内</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
+        </div>
+
+        <div id="pay-alipay" class="field hidden">
+          <label>支付宝收款码 <span class="hint">图莫得传的话，投的人扫不到哦</span></label>
+          <div class="upload-box" data-upload="alipay_qr">
+            <div class="thumb" data-thumb>＋</div>
+            <div class="tip"><strong>传一张支付宝收款码</strong>自动转成 webp，2MB 以内</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
+        </div>
+
+        <div id="pay-usdt" class="field hidden">
+          <label>USDT 收款图 <span class="hint">传一张 USDT 收款码，有就传，莫得就算了</span></label>
+          <div class="upload-box" data-upload="usdt_qr">
+            <div class="thumb" data-thumb>＋</div>
+            <div class="tip"><strong>传一张 USDT 收款码</strong>自动转成 webp，2MB 以内</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
+          <label style="margin-top:14px;">USDT TRC20 地址 <span class="hint">有图就莫得必填地址</span></label>
+          <input type="text" id="usdtAddress" maxlength="64" placeholder="T 开头的地址，看清楚哈。" />
+          <div class="alert" style="margin-top:10px;">转之前看清楚哈，地址错了，饭碗儿也救不回来。</div>
+        </div>
+
+        <div id="pay-usdt_bep20" class="field hidden">
+          <label>USDT BEP20 收款图 <span class="hint">传一张 BEP20 收款码，有就传，莫得就算了</span></label>
+          <div class="upload-box" data-upload="usdt_bep20_qr">
+            <div class="thumb" data-thumb>＋</div>
+            <div class="tip"><strong>传一张 USDT BEP20 收款码</strong>自动转成 webp，2MB 以内</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
+          <label style="margin-top:14px;">USDT BEP20 地址 <span class="hint">有图就莫得必填地址</span></label>
+          <input type="text" id="usdtBep20Address" maxlength="42" placeholder="0x 开头的地址，看清楚哈。" autocomplete="off" spellcheck="false" />
+          <div class="alert" style="margin-top:10px;">转之前看清楚哈，地址错了，饭碗儿也救不回来。</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="nickname">叫啥子嘛？<span class="req">*</span></label>
+        <input type="text" id="nickname" maxlength="30" placeholder="昵称，30 个字以内" />
+      </div>
+
+      <div class="field" id="slug-field">
+        <label for="slug">碗的地址后缀 <span class="hint">可选，留空就随机整个。3-20 位，英文小写 / 数字 / 短横杠。</span></label>
+        <input type="text" id="slug" maxlength="20" placeholder="比如：cunzhang" autocomplete="off" spellcheck="false" />
+        <div class="slug-preview" id="slug-preview"></div>
+      </div>
+
+      <div class="field">
+        <label>头像 <span class="hint">可以不传</span></label>
+        <div class="upload-box" data-upload="avatar">
+          <div class="thumb" data-thumb>🍚</div>
+          <div class="tip"><strong>传个头像</strong>自动转成 webp，2MB 以内</div>
+          <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+        </div>
+      </div>
+
+      <div class="turnstile-wrap" id="turnstile-wrap"></div>
+
+      <button class="btn btn-lg btn-primary" id="submit" style="width:100%;">🍚 把饭碗儿摆起</button>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>🍚 饭碗儿 · 问斗是先吃饭</p>
+    <p>饭钱不经过我们，直接甩给摆碗的兄弟伙。</p>
+    <p>我们只负责记到：哪个兄弟伙，今天有人投过饭。</p>
+  </footer>
+
+  <!-- 摆好之后的成功弹窗 -->
+  <div class="modal-mask" id="success-mask">
+    <div class="modal" style="text-align:center;">
+      <h3>饭碗儿摆起了！🍚</h3>
+      <p class="lead" style="margin-bottom:16px;">现在就差哪个耿直人来投一口了。</p>
+      <button class="btn btn-gold" id="copy-link" style="width:100%; margin-bottom:10px;">复制饭碗儿链接</button>
+      <button class="btn btn-ghost" id="copy-manage" style="width:100%; margin-bottom:10px;">🔑 复制管理链接（存好，莫搞丢了）</button>
+      <div class="alert" id="copy-tip" style="display:none;">链接已经抄到起了，拿出去喊兄弟伙来瞅一哈。</div>
+      <div class="alert" id="manage-tip" style="display:none;">管理链接抄到起了。存到备忘录 / 微信文件传输助手，以后随便哪个浏览器打开都能改饭碗儿、放行投喂。</div>
+      <div class="btn-row" style="justify-content:center; margin-top:14px;">
+        <a class="btn" id="goto-bowl">进去瞅一哈 →</a>
+        <button class="btn btn-ghost" id="another-bowl">再摆一个</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/create.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# 饭碗儿 —— Cloudflare Worker 配置
+# 部署前需要：wrangler d1 create fanwaner / wrangler r2 bucket create fanwaner-assets，
+# 把 database_id 填到下面；再 wrangler secret put 三个密钥（见 .env.example）。
+
+name = "fanwaner"
+main = "src/index.js"
+compatibility_date = "2025-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 静态资源：所有请求先过 Worker（run_worker_first），由 Worker 分流 /api/* 与静态页
+# html_handling = "none"：不做 .html 的 clean-url 重定向，保证 /bowl.html 能被 Worker 注入 OG meta
+assets = { directory = "./static", binding = "ASSETS", run_worker_first = true, not_found_handling = "none", html_handling = "none" }
+
+# 可选：绑自定义域名（不配就用 workers.dev 域名）
+# routes = [{ pattern = "fanwaner.example.com", custom_domain = true }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fanwaner"
+database_id = "" # 填 wrangler d1 create 生成的 id
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "fanwaner-assets"
+
+[vars]
+TURNSTILE_SITE_KEY = "" # Turnstile 站点公开 sitekey
+MAX_AMOUNT_YUAN = 1000 # 单次投喂/目标金额上限（元）
+MAX_UPLOAD_BYTES = 2097152 # 图片上传大小上限（2MB）
+R2_FONT_KEY = "fonts/NotoSansSC-Regular.otf" # OG 图用的中文字体在 R2 的 key
+SITE_URL = "" # 站点域名（不带结尾斜杠），如 https://fanwaner.example.com，用于 OG 分享图链接

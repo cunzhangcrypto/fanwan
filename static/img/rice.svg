@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 17" width="26" height="17">
+  <!-- 米粒：进度条填充 + 投喂动画用 -->
+  <ellipse cx="13" cy="8.5" rx="11" ry="6.8" fill="#fdf3d7" stroke="#e8c98a" stroke-width="1.4"/>
+  <path d="M9 6 q4 -2.4 8 0" stroke="#f3ddac" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+</svg>

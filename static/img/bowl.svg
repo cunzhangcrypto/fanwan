@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <!-- 大饭碗插画：首页 / 详情页 / 空状态用 -->
+  <defs>
+    <linearGradient id="bw" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdf6"/>
+      <stop offset="1" stop-color="#f3e7c8"/>
+    </linearGradient>
+  </defs>
+  <!-- 蒸汽 -->
+  <g stroke="#e8d3ab" stroke-width="5" stroke-linecap="round" opacity="0.7">
+    <path d="M96 58 q-4 -14 2 -20"/>
+    <path d="M122 54 q-2 -16 4 -22"/>
+    <path d="M148 58 q-4 -14 2 -20"/>
+  </g>
+  <!-- 桌面阴影 -->
+  <ellipse cx="120" cy="204" rx="90" ry="22" fill="#ecd9b0"/>
+  <!-- 碗身 -->
+  <path d="M34 156 Q120 216 206 156 L194 196 Q120 240 46 196 Z" fill="#faf4e6" stroke="#d9c39a" stroke-width="5"/>
+  <path d="M46 196 Q120 240 194 196 Q120 216 46 196 Z" fill="#e8d3ab"/>
+  <!-- 碗口 -->
+  <ellipse cx="120" cy="150" rx="86" ry="34" fill="url(#bw)" stroke="#d9c39a" stroke-width="4.5"/>
+  <!-- 米饭堆 -->
+  <g fill="#fdf6e3" stroke="#e8d3ab" stroke-width="1.2">
+    <ellipse cx="84" cy="146" rx="20" ry="11"/>
+    <ellipse cx="126" cy="140" rx="20" ry="11"/>
+    <ellipse cx="164" cy="146" rx="20" ry="11"/>
+    <ellipse cx="104" cy="166" rx="20" ry="11"/>
+    <ellipse cx="144" cy="166" rx="20" ry="11"/>
+    <ellipse cx="122" cy="156" rx="14" ry="8" fill="#fff9ec"/>
+  </g>
+  <!-- 筷子 -->
+  <g stroke="#b98d4f" stroke-width="6" stroke-linecap="round">
+    <line x1="176" y1="60" x2="192" y2="112"/>
+    <line x1="196" y1="64" x2="212" y2="116"/>
+  </g>
+  <!-- 小辣椒 -->
+  <path d="M52 78 q14 -32 32 -12 q-4 20 -22 24 Z" fill="#e23a3a"/>
+  <path d="M64 88 q4 16 -6 24" stroke="#c02626" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

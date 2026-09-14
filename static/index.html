@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>饭碗儿 —— 没得饭吃啷个办？先把饭碗儿摆出来嘛。</title>
+  <meta name="description" content="互联网人的在线饭碗儿。摆个饭碗儿，等个耿直人投一口。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="__OG_TITLE__" />
+  <meta property="og:description" content="__OG_DESC__" />
+  <meta property="og:image" content="__OG_IMAGE__" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="__OG_URL__" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <img src="/img/logo.svg" alt="饭碗儿 Logo" />
+      <span>饭碗儿<small>没得饭吃啷个办？先把饭碗儿摆出来嘛。</small></span>
+    </a>
+    <nav class="nav">
+      <a class="btn btn-sm btn-ghost" href="/#bowls">👀 看哈哪个还在讨生活</a>
+      <a class="btn btn-sm btn-primary" href="/create.html">🍚 摆个饭碗儿</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <img class="hero-bowl anim-settle" src="/img/bowl.svg" alt="一只摆起的饭碗" />
+      <h1>没得饭吃啷个办？<br /><em>先把饭碗儿摆出来嘛。</em></h1>
+      <p class="sub">互联网这么大，总有个耿直人愿意请你吃口饭嘛。</p>
+      <div class="hero-actions">
+        <a class="btn btn-lg btn-primary" href="/create.html">🍚 摆个饭碗儿</a>
+        <a class="btn btn-lg" href="#bowls">👀 看哈哪个还在讨生活</a>
+      </div>
+      <p class="slogan" id="slogan"></p>
+    </section>
+
+    <section id="bowls">
+      <h2 class="section-title">今天哪个还没吃饭？<small id="bowl-count"></small></h2>
+      <div id="bowl-list" class="bowl-grid"></div>
+      <div id="empty-box" class="empty hidden">
+        <img src="/img/bowl.svg" alt="空碗" />
+        <h2>还没得哪个来喂……</h2>
+        <p>莫慌，饭碗儿都摆起了，总会有人路过。</p>
+        <a class="btn btn-primary" href="/create.html">🍚 我先摆一个</a>
+      </div>
+      <div id="load-more" class="hidden" style="text-align:center; margin-top:26px;">
+        <button class="btn btn-gold" id="load-more-btn">再看一哈还有莫得</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>🍚 饭碗儿 · 问斗是先吃饭 | <a href="https://github.com/cunzhangcrypto/-" target="_blank" rel="noopener">GitHub 开源（MIT）</a></p>
+    <p>饭钱不经过我们，直接甩给摆碗的兄弟伙。</p>
+    <p>我们只负责记到：哪个兄弟伙，今天有人投过饭。</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/index.js"></script>
+</body>
+</html>

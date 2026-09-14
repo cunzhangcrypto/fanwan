@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <defs>
+    <linearGradient id="bowlShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdf6"/>
+      <stop offset="1" stop-color="#f3e7c8"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="96" height="96" rx="22" fill="#fbf4e4"/>
+  <ellipse cx="48" cy="80" rx="36" ry="9" fill="#ecd9b0"/>
+  <path d="M14 62 Q48 86 82 62 L78 78 Q48 96 18 78 Z" fill="#faf4e6" stroke="#d9c39a" stroke-width="3"/>
+  <path d="M18 78 Q48 96 78 78 Q48 86 18 78 Z" fill="#e8d3ab"/>
+  <ellipse cx="48" cy="60" rx="34" ry="14" fill="url(#bowlShade)" stroke="#d9c39a" stroke-width="2.5"/>
+  <g fill="#f6e8c8" stroke="#e8d3ab" stroke-width="1">
+    <ellipse cx="38" cy="57" rx="6.5" ry="4"/>
+    <ellipse cx="50" cy="54" rx="6.5" ry="4"/>
+    <ellipse cx="58" cy="59" rx="6.5" ry="4"/>
+  </g>
+  <g stroke="#b98d4f" stroke-width="4" stroke-linecap="round">
+    <line x1="64" y1="24" x2="70" y2="40"/>
+    <line x1="74" y1="26" x2="80" y2="42"/>
+  </g>
+  <path d="M20 26 q7 -16 16 -6 q-2 10 -11 12 Z" fill="#e23a3a"/>
+  <path d="M26 31 q2 8 -3 12" stroke="#c02626" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>
