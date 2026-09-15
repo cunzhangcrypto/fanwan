@@ -330,6 +330,23 @@
   }
   initTurnstile();
 
+  // 提交前确保 token 已生成：首次进入脚本/挑战加载慢，等它一哈，莫让用户白填一堆
+  function ensureTurnstileToken(timeout = 8000) {
+    if (turnstileToken) return Promise.resolve(turnstileToken);
+    return new Promise((resolve) => {
+      const t0 = Date.now();
+      const iv = setInterval(() => {
+        if (turnstileToken) {
+          clearInterval(iv);
+          resolve(turnstileToken);
+        } else if (Date.now() - t0 >= timeout) {
+          clearInterval(iv);
+          resolve("");
+        }
+      }, 150);
+    });
+  }
+
   $("#btn-submit-donation").addEventListener("click", async () => {
     const btn = $("#btn-submit-donation");
     const amount = $("#rd-amount").value;
@@ -353,7 +370,7 @@
         paymentMethod: payMethod,
         txid: txid || undefined,
         isAnonymous,
-        turnstileToken: turnstileToken || undefined,
+        turnstileToken: (await ensureTurnstileToken()) || undefined,
       });
       localStorage.setItem(`donation_delete_${data.id}`, data.deleteToken);
       // 成功动画：米粒掉进饭碗 + 碗轻轻晃一哈

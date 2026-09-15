@@ -180,6 +180,24 @@
   }
   initTurnstile();
 
+  // 提交前确保 token 已生成：首次进入脚本/挑战加载慢，token 可能要几秒才出来，
+  // 等它一哈，莫让用户填完一堆信息最后卡在人机验证上。
+  function ensureTurnstileToken(timeout = 8000) {
+    if (turnstileToken) return Promise.resolve(turnstileToken);
+    return new Promise((resolve) => {
+      const t0 = Date.now();
+      const iv = setInterval(() => {
+        if (turnstileToken) {
+          clearInterval(iv);
+          resolve(turnstileToken);
+        } else if (Date.now() - t0 >= timeout) {
+          clearInterval(iv);
+          resolve("");
+        }
+      }, 150);
+    });
+  }
+
   /* ---------- 自定义后缀 ---------- */
   const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,18}[a-z0-9]$/;
   const slugInput = $("#slug");
@@ -260,7 +278,7 @@
       usdtBep20Address: usdtBep20Address || undefined,
       nickname,
       slug: slugVal || undefined,
-      turnstileToken: turnstileToken || undefined,
+      turnstileToken: (await ensureTurnstileToken()) || undefined,
     };
 
     try {
