@@ -254,6 +254,23 @@ routes = [{ pattern = "fanwaner.example.com", custom_domain = true }]
 - **后台**：`ADMIN_KEY` 走 Bearer Token，只存在 Worker Secret
 - **上传**：前端统一转 webp（canvas）+ 后端魔数校验只收 webp + 2MB 上限 + 轻量 IP 限流
 
+## 🍚 赏口饭吃
+
+写代码的也要吃饭嘛。觉得饭碗儿好用、帮到了你，欢迎赏一口，让作者也端稳饭碗儿。
+
+| 微信 | 支付宝 |
+|---|---|
+| <img src="static/img/donate/wechat.png" width="180" alt="微信打赏" /> | <img src="static/img/donate/alipay.png" width="180" alt="支付宝打赏" /> |
+
+| USDT (TRC20) | USDT (BEP20) |
+|---|---|
+| <img src="static/img/donate/trc20.png" width="180" alt="USDT TRC20 打赏" /> | <img src="static/img/donate/bep20.png" width="180" alt="USDT BEP20 打赏" /> |
+
+**USDT 地址（转之前看清楚哈）：**
+
+- TRC20：`TLRi2gcqVmmgqtXBYyHuviLRxY2eeiuXk9`
+- BEP20：`0x88f9908344E711bffcB95b26aeF54fe3d56b919B`
+
 ## ⚠️ 免责声明
 
 饭碗儿不是支付平台，不收钱、不托管钱、不监听链上。
