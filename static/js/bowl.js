@@ -316,12 +316,42 @@
   });
 
   /* ---------- 报到（提交投喂） ---------- */
-  async function initTurnstile() {
-    try {
-      const cfg = await get("/api/config");
-      turnstileSiteKey = cfg.turnstileSiteKey || "";
-      renderTurnstile();
-    } catch { }
+  let turnstileScriptReady = false;
+
+  // 脚本加载好了会自动喊这个（api.js?onload=），渲染时机就准了，莫管它加载好慢
+  window.__turnstileOnload = () => {
+    turnstileScriptReady = true;
+    renderTurnstile();
+  };
+
+  // 动态加载 Turnstile 脚本。带 ?onload= 回调，脚本自己会喊我们，渲染时机最准；
+  // 首次进入 challenges.cloudflare.com 可能加载慢/失败，加载失败就隔一会儿重试。
+  function loadTurnstile(retries = 4) {
+    return new Promise((resolve) => {
+      if (turnstileScriptReady || typeof window.turnstile !== "undefined") return resolve(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=__turnstileOnload";
+      s.async = true;
+      let done = false;
+      const finish = (ok) => { if (!done) { done = true; resolve(ok); } };
+      s.onload = () => finish(true);
+      s.onerror = () => {
+        if (retries > 0) setTimeout(() => loadTurnstile(retries - 1).then(finish), 800);
+        else finish(false);
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  // sitekey 拿不到就多试几次：冷启动 /api/config 可能慢，拿不到就渲染不出验证
+  async function fetchSiteKey() {
+    for (let i = 0; i < 5 && !turnstileSiteKey; i++) {
+      try {
+        const cfg = await get("/api/config");
+        turnstileSiteKey = cfg.turnstileSiteKey || "";
+      } catch { /* 下次再试 */ }
+      if (!turnstileSiteKey) await new Promise((r) => setTimeout(r, 400));
+    }
   }
 
   function renderTurnstile() {
@@ -333,13 +363,23 @@
       "expired-callback": () => { turnstileToken = ""; },
     });
   }
+
+  function initTurnstile() {
+    // 只提前加载脚本 + 拿 sitekey。这里不渲染：
+    // Turnstile 容器藏在"报到"弹窗里（display:none），隐藏容器渲染会白屏，
+    // 等进到 report 步（showStep）容器可见了再渲染。
+    loadTurnstile();
+    fetchSiteKey();
+  }
   initTurnstile();
 
-  // 提交前确保 token 已生成。首次进入时 Turnstile 可能还没渲染/没触发验证（只有刷新后
-  // 有信任标记才自动过），所以这里补渲染 + 主动 execute() 强制走一次，莫让用户卡死。
-  function ensureTurnstileToken(timeout = 8000) {
+  // 提交前确保 token 已生成：配置/脚本没就绪就补，再主动 execute() 强制走一次。
+  async function ensureTurnstileToken(timeout = 8000) {
+    if (turnstileToken) return turnstileToken;
+    await fetchSiteKey();
+    await loadTurnstile();
     renderTurnstile();
-    if (turnstileToken) return Promise.resolve(turnstileToken);
+    if (turnstileToken) return turnstileToken;
     try {
       if (turnstileWidget) window.turnstile.execute(turnstileWidget);
     } catch { }
@@ -441,6 +481,17 @@
     ["pay", "report", "done"].forEach((s) => {
       $(`#step-${s}`).classList.toggle("hidden", s !== step);
     });
+    // 走到"看收款方式+报到"这一步，Turnstile 容器才可见。
+    // 脚本和 sitekey 早就绪的话，这里一渲染就出验证（非交互模式自动过）。
+    if (step === "report") {
+      renderTurnstile();
+      // 脚本万一还没加载完（首次进网络慢），轮询补渲染，莫让用户卡在报到这步
+      const t0 = Date.now();
+      const iv = setInterval(() => {
+        renderTurnstile();
+        if (turnstileWidget || Date.now() - t0 > 15000) clearInterval(iv);
+      }, 400);
+    }
   }
 
   [shareMask, donateMask].forEach((mask) => {

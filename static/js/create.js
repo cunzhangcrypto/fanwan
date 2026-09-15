@@ -165,13 +165,42 @@
   let turnstileToken = "";
   let turnstileWidget = null;
   let turnstileSiteKey = "";
+  let turnstileScriptReady = false;
 
-  async function initTurnstile() {
-    try {
-      const cfg = await FW.get("/api/config");
-      turnstileSiteKey = cfg.turnstileSiteKey || "";
-      renderTurnstile();
-    } catch { /* 拿不到配置就算了，后端有 secret 时会拦 */ }
+  // 脚本加载好了会自动喊这个（api.js?onload=），渲染时机就准了，莫管它加载好慢
+  window.__turnstileOnload = () => {
+    turnstileScriptReady = true;
+    renderTurnstile();
+  };
+
+  // 动态加载 Turnstile 脚本。带 ?onload= 回调，脚本自己会喊我们，渲染时机最准；
+  // 首次进入 challenges.cloudflare.com 可能加载慢/失败，加载失败就隔一会儿重试。
+  function loadTurnstile(retries = 4) {
+    return new Promise((resolve) => {
+      if (turnstileScriptReady || typeof window.turnstile !== "undefined") return resolve(true);
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=__turnstileOnload";
+      s.async = true;
+      let done = false;
+      const finish = (ok) => { if (!done) { done = true; resolve(ok); } };
+      s.onload = () => finish(true);
+      s.onerror = () => {
+        if (retries > 0) setTimeout(() => loadTurnstile(retries - 1).then(finish), 800);
+        else finish(false);
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  // sitekey 拿不到就多试几次：冷启动 /api/config 可能慢，拿不到就渲染不出验证
+  async function fetchSiteKey() {
+    for (let i = 0; i < 5 && !turnstileSiteKey; i++) {
+      try {
+        const cfg = await FW.get("/api/config");
+        turnstileSiteKey = cfg.turnstileSiteKey || "";
+      } catch { /* 下次再试 */ }
+      if (!turnstileSiteKey) await new Promise((r) => setTimeout(r, 400));
+    }
   }
 
   function renderTurnstile() {
@@ -183,13 +212,28 @@
       "expired-callback": () => { turnstileToken = ""; },
     });
   }
+
+  async function initTurnstile() {
+    // 脚本和 sitekey 并行整：脚本先拉起，sitekey 拿不到就重试
+    loadTurnstile();
+    await fetchSiteKey();
+    // 兜底轮询：脚本首次进可能要好些秒才加载完（没缓存），到了就渲染，
+    // 莫再让用户靠刷新才看到人机验证
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      renderTurnstile();
+      if (turnstileWidget || Date.now() - t0 > 20000) clearInterval(iv);
+    }, 400);
+  }
   initTurnstile();
 
-  // 提交前确保 token 已生成。首次进入时 Turnstile 可能还没渲染/没触发验证（只有刷新后
-  // 有信任标记才自动过），所以这里补渲染 + 主动 execute() 强制走一次，莫让用户卡死。
-  function ensureTurnstileToken(timeout = 8000) {
+  // 提交前确保 token 已生成：配置/脚本没就绪就补，再主动 execute() 强制走一次。
+  async function ensureTurnstileToken(timeout = 8000) {
+    if (turnstileToken) return turnstileToken;
+    await fetchSiteKey();
+    await loadTurnstile();
     renderTurnstile();
-    if (turnstileToken) return Promise.resolve(turnstileToken);
+    if (turnstileToken) return turnstileToken;
     try {
       if (turnstileWidget) window.turnstile.execute(turnstileWidget);
     } catch { /* 执行不了就等 callback 自己来 */ }
