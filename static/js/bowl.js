@@ -12,6 +12,7 @@
   let payMethod = "wechat";
   let turnstileToken = "";
   let turnstileWidget = null;
+  let turnstileSiteKey = "";
 
   const STATUS_MAP = {
     active: ["🍚 还在讨生活", "s-active"],
@@ -318,21 +319,30 @@
   async function initTurnstile() {
     try {
       const cfg = await get("/api/config");
-      const key = cfg.turnstileSiteKey;
-      if (!key || typeof window.turnstile === "undefined") return;
-      turnstileWidget = window.turnstile.render($("#turnstile-wrap"), {
-        sitekey: key,
-        callback: (t) => { turnstileToken = t; },
-        "error-callback": () => { turnstileToken = ""; },
-        "expired-callback": () => { turnstileToken = ""; },
-      });
+      turnstileSiteKey = cfg.turnstileSiteKey || "";
+      renderTurnstile();
     } catch { }
+  }
+
+  function renderTurnstile() {
+    if (turnstileWidget || !turnstileSiteKey || typeof window.turnstile === "undefined") return;
+    turnstileWidget = window.turnstile.render($("#turnstile-wrap"), {
+      sitekey: turnstileSiteKey,
+      callback: (t) => { turnstileToken = t; },
+      "error-callback": () => { turnstileToken = ""; },
+      "expired-callback": () => { turnstileToken = ""; },
+    });
   }
   initTurnstile();
 
-  // 提交前确保 token 已生成：首次进入脚本/挑战加载慢，等它一哈，莫让用户白填一堆
+  // 提交前确保 token 已生成。首次进入时 Turnstile 可能还没渲染/没触发验证（只有刷新后
+  // 有信任标记才自动过），所以这里补渲染 + 主动 execute() 强制走一次，莫让用户卡死。
   function ensureTurnstileToken(timeout = 8000) {
+    renderTurnstile();
     if (turnstileToken) return Promise.resolve(turnstileToken);
+    try {
+      if (turnstileWidget) window.turnstile.execute(turnstileWidget);
+    } catch { }
     return new Promise((resolve) => {
       const t0 = Date.now();
       const iv = setInterval(() => {

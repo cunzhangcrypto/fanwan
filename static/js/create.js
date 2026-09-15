@@ -164,26 +164,35 @@
   /* ---------- Turnstile ---------- */
   let turnstileToken = "";
   let turnstileWidget = null;
+  let turnstileSiteKey = "";
 
   async function initTurnstile() {
     try {
       const cfg = await FW.get("/api/config");
-      const key = cfg.turnstileSiteKey;
-      if (!key || typeof window.turnstile === "undefined") return;
-      turnstileWidget = window.turnstile.render($("#turnstile-wrap"), {
-        sitekey: key,
-        callback: (token) => { turnstileToken = token; },
-        "error-callback": () => { turnstileToken = ""; },
-        "expired-callback": () => { turnstileToken = ""; },
-      });
+      turnstileSiteKey = cfg.turnstileSiteKey || "";
+      renderTurnstile();
     } catch { /* 拿不到配置就算了，后端有 secret 时会拦 */ }
+  }
+
+  function renderTurnstile() {
+    if (turnstileWidget || !turnstileSiteKey || typeof window.turnstile === "undefined") return;
+    turnstileWidget = window.turnstile.render($("#turnstile-wrap"), {
+      sitekey: turnstileSiteKey,
+      callback: (token) => { turnstileToken = token; },
+      "error-callback": () => { turnstileToken = ""; },
+      "expired-callback": () => { turnstileToken = ""; },
+    });
   }
   initTurnstile();
 
-  // 提交前确保 token 已生成：首次进入脚本/挑战加载慢，token 可能要几秒才出来，
-  // 等它一哈，莫让用户填完一堆信息最后卡在人机验证上。
+  // 提交前确保 token 已生成。首次进入时 Turnstile 可能还没渲染/没触发验证（只有刷新后
+  // 有信任标记才自动过），所以这里补渲染 + 主动 execute() 强制走一次，莫让用户卡死。
   function ensureTurnstileToken(timeout = 8000) {
+    renderTurnstile();
     if (turnstileToken) return Promise.resolve(turnstileToken);
+    try {
+      if (turnstileWidget) window.turnstile.execute(turnstileWidget);
+    } catch { /* 执行不了就等 callback 自己来 */ }
     return new Promise((resolve) => {
       const t0 = Date.now();
       const iv = setInterval(() => {
