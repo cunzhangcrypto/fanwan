@@ -380,6 +380,7 @@
 
     try {
       if (isEdit) {
+        payload.avatarUrl = uploads.avatar || undefined; // 编辑重传头像也要带上，不然后端只拿到旧头像
         payload.editToken = editToken;
         delete payload.turnstileToken;
         delete payload.slug;
