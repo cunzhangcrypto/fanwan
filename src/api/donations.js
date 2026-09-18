@@ -5,10 +5,11 @@ import { verifyTurnstile } from "../lib/turnstile.js";
 import { getIp, computeDailyKey } from "../lib/ip.js";
 import { randomToken } from "../lib/slug.js";
 import { getBowlBySlug } from "../lib/db.js";
+import { notifyDonation } from "../lib/notify.js";
 
 // POST /api/donation —— 投一口
 // 平台不碰钱：钱是用户直接给摆碗的兄弟伙的，这里只"记一笔"，等后台审核。
-export async function createDonation(request, env) {
+export async function createDonation(request, env, ctx) {
   const ip = getIp(request);
   const body = await readJson(request);
   if (!body) return fail(ERR.VALIDATION_ERROR, "数据没传对头，再整一哈嘛。");
@@ -51,6 +52,9 @@ export async function createDonation(request, env) {
   )
     .bind(bowl.id, nickname, amountCents, message, paymentMethod, txid, isAnonymous, ipHash.slice(0, 32), deleteToken)
     .run();
+
+  // 4. 留言通知：异步推给碗主人（失败静默，不影响主流程）
+  notifyDonation(env, ctx, bowl, { isAnonymous: !!isAnonymous, nickname, message, amountYuan: amountCents / 100 }, new URL(request.url).host);
 
   return ok({ id: res.meta.last_row_id, deleteToken }, 201);
 }

@@ -14,7 +14,7 @@ import { RESERVED_SLUGS } from "./lib/validate.js";
 const SLUG_PATH_RE = /^\/([a-z0-9](?:[a-z0-9-]{1,18})[a-z0-9])$/;
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
@@ -45,7 +45,7 @@ export default {
 
       // 投喂 API
       if (path.startsWith("/api/donation")) {
-        if (method === "POST" && path === "/api/donation") return createDonation(request, env);
+        if (method === "POST" && path === "/api/donation") return createDonation(request, env, ctx);
         const m = path.match(/^\/api\/donation\/(\d+)$/);
         if (method === "DELETE" && m) return deleteDonation(request, env, Number(m[1]));
         return fail(ERR.NOT_FOUND, "没得这个接口。", 404);

@@ -317,7 +317,52 @@ img { max-width: 100%; }
   z-index: 1;
 }
 
-.bowl-card .foot .who { display: flex; align-items: center; gap: 6px; }
+.bowl-card .foot .who {
+  display: flex;
+  align-items: center;
+  flex: 1; /* 撑满 icon 右侧剩余空间，做滚动窗口 */
+  min-width: 0;
+  min-height: 2.4em; /* 至少两行高，轮播短/长文字时卡片不抖 */
+  overflow: hidden; /* 滚动文字在这里头裁切，绝不跑到右边按钮 */
+}
+.bowl-card .who-icon {
+  flex: none; /* 固定小人人头像：留言滚动时也稳起不跑 */
+  font-size: 15px;
+  margin-right: 6px;
+  line-height: 1;
+}
+.bowl-card .foot .who .who-txt {
+  display: block;
+  flex-shrink: 0; /* 不收缩：宽度 = 内容全宽，长文字才能完整滚完 */
+  white-space: nowrap;
+  transition: opacity 0.24s ease;
+}
+.bowl-card .foot .who-txt.scrolling {
+  animation-name: feed-marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes feed-marquee {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+
+/* 左侧计数/留言区：独立一区，滚动文字在这里头裁切，绝不跑到右边按钮 */
+.bowl-card .foot-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 12px;
+}
+.bowl-card .go-btn {
+  flex-shrink: 0;
+  color: var(--gold-deep);
+  font-weight: 700;
+  border-left: 1px solid var(--line);
+  padding-left: 12px;
+}
 
 /* ---------- 空状态 ---------- */
 .empty {
@@ -361,6 +406,8 @@ img { max-width: 100%; }
 .field input[type="text"],
 .field input[type="number"],
 .field input[type="date"],
+.field input[type="email"],
+.field input[type="password"],
 .field textarea,
 .field select {
   width: 100%;
@@ -875,4 +922,82 @@ img { max-width: 100%; }
   .bowl-grid { grid-template-columns: 1fr; }
   .site-header { padding-top: 18px; }
   .brand { font-size: 20px; }
+}
+
+/* ---------- 首页「吃饱收摊」折叠区 ---------- */
+.done-box {
+  background: var(--bg-2, #faf6ef);
+  border: 1px solid var(--line, #eee4d6);
+  border-radius: 16px;
+  padding: 0 20px;
+}
+.done-box summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 0;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 700;
+  list-style: none;
+  user-select: none;
+}
+.done-box summary::-webkit-details-marker { display: none; }
+.done-box summary .caret { margin-left: auto; color: var(--muted); transition: transform 0.2s; }
+.done-box[open] summary .caret { transform: rotate(180deg); }
+.done-box summary small { font-weight: 400; }
+
+/* ---------- 摆碗页「留言提醒」折叠区 ---------- */
+.notify-box {
+  margin: 20px 0;
+  background: var(--bg-2, #faf6ef);
+  border: 1px dashed var(--line, #eee4d6);
+  border-radius: 12px;
+  padding: 0 16px;
+}
+.notify-box summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+  user-select: none;
+}
+.notify-box summary::-webkit-details-marker { display: none; }
+.notify-box summary .hint { font-weight: 400; }
+
+/* summary 行最右的下拉箭头：点击就是展开折叠区 */
+.notify-box summary .caret {
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.notify-box[open] summary .caret { transform: rotate(180deg); }
+
+/* 邮箱「发信通道」说明 */
+.notify-email-note {
+  margin: 4px 0 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  background: #fff4dc;
+  border: 1px solid #f0dcb4;
+  border-radius: 10px;
+}
+
+/* 邮箱提醒单独一个框 */
+.notify-email-box {
+  margin: 16px 0 4px;
+  padding: 4px 16px 14px;
+  background: #fffcf2;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+}
+.notify-email-title {
+  margin: 0 0 2px;
+  padding-top: 14px;
+  font-weight: 700;
 }

@@ -7,7 +7,7 @@
   const editSlug = params.get("edit");
   const editToken = params.get("token") || "";
   let editBowl = null;
-  const uploads = { avatar: "", wechat_qr: "", alipay_qr: "", usdt_qr: "", usdt_bep20_qr: "" };
+  const uploads = { avatar: "", wechat_qr: "", alipay_qr: "", usdt_qr: "", usdt_bep20_qr: "", paypal_qr: "" };
 
   async function initEdit() {
     if (!editSlug || !editToken) return;
@@ -28,6 +28,14 @@
       $("#nickname").value = editBowl.nickname;
       $("#usdtAddress").value = editBowl.usdtAddress || "";
       $("#usdtBep20Address").value = editBowl.usdtBep20Address || "";
+      $("#paypalLink").value = editBowl.paypalLink || "";
+      $("#notifyWecom").value = editBowl.notifyWecom || "";
+      $("#notifyTelegram").value = editBowl.notifyTelegram || "";
+      $("#notifyServerchan").value = editBowl.notifyServerchan || "";
+      $("#notifyEmail").value = editBowl.notifyEmail || "";
+      $("#emailApiUrl").value = editBowl.emailApiUrl || "";
+      $("#emailFrom").value = editBowl.emailFrom || "";
+      // API Key 是敏感信息，不回显；不填就保留原来的
       $("#title-count").textContent = editBowl.title.length;
       $("#want-count").textContent = editBowl.want.length;
       $("#reason-count").textContent = editBowl.reason.length;
@@ -53,8 +61,8 @@
       }
 
       // 回显已有的收款图 / 头像
-      ["wechat_qr", "alipay_qr", "usdt_qr", "usdt_bep20_qr", "avatar"].forEach((k) => {
-        const field = { wechat_qr: "wechatQr", alipay_qr: "alipayQr", usdt_qr: "usdtQr", usdt_bep20_qr: "usdtBep20Qr", avatar: "avatarUrl" }[k];
+      ["wechat_qr", "alipay_qr", "usdt_qr", "usdt_bep20_qr", "paypal_qr", "avatar"].forEach((k) => {
+        const field = { wechat_qr: "wechatQr", alipay_qr: "alipayQr", usdt_qr: "usdtQr", usdt_bep20_qr: "usdtBep20Qr", paypal_qr: "paypalQr", avatar: "avatarUrl" }[k];
         const url = editBowl[field];
         if (!url) return;
         uploads[k] = url;
@@ -87,7 +95,7 @@
 
   /* ---------- 收款方式切换 ---------- */
   let payMethod = "wechat";
-  const payBoxes = { wechat: "pay-wechat", alipay: "pay-alipay", usdt: "pay-usdt", usdt_bep20: "pay-usdt_bep20" };
+  const payBoxes = { wechat: "pay-wechat", alipay: "pay-alipay", usdt: "pay-usdt", usdt_bep20: "pay-usdt_bep20", paypal: "pay-paypal" };
 
   $$("#pay-tabs .pay-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -280,9 +288,20 @@
     const deadline = $("#deadline").value || null;
     const usdtAddress = $("#usdtAddress").value.trim();
     const usdtBep20Address = $("#usdtBep20Address").value.trim();
+    const paypalLink = $("#paypalLink").value.trim();
+    const notifyWecom = $("#notifyWecom").value.trim();
+    const notifyTelegram = $("#notifyTelegram").value.trim();
+    const notifyServerchan = $("#notifyServerchan").value.trim();
+    const notifyEmail = $("#notifyEmail").value.trim();
+    const emailApiUrl = $("#emailApiUrl").value.trim();
+    const emailApiKey = $("#emailApiKey").value.trim();
+    const emailFrom = $("#emailFrom").value.trim();
     const slugVal = $("#slug").value.trim().toLowerCase();
 
     const BEP20_RE = /^0x[a-fA-F0-9]{40}$/;
+    const PAYPAL_RE = /^(https?:\/\/[a-z0-9.-]*(?:paypal\.me|paypal\.com)[a-zA-Z0-9/._?&=%-]*|[^\s@]+@[^\s@]+\.[^\s@]{2,})$/i;
+    const EMAILAPIURL_RE = /^https:\/\/[^\s]+\.[^\s]{2,}$/;
+    const EMAILFROM_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$|^.{1,60}\s*<[^\s@]+@[^\s@]+\.[^\s@]{2,}>$/;
 
     if (!title) errBox.textContent = "饭碗儿总得喊个啥子嘛。";
     else if (!want) errBox.textContent = "想吃啥子还是要说清楚点嘛。";
@@ -291,6 +310,14 @@
     else if (Number(targetAmount) > 1000) errBox.textContent = "胃口莫太大，1000 块封顶了哈。";
     else if (!nickname) errBox.textContent = "叫啥子嘛，总得留个名字。";
     else if (usdtBep20Address && !BEP20_RE.test(usdtBep20Address)) errBox.textContent = "BEP20 地址不对头，0x 开头 42 位，看清楚哈。";
+    else if (paypalLink && !PAYPAL_RE.test(paypalLink)) errBox.textContent = "PayPal 链接或邮箱不对头，看清楚哈。";
+    else if (notifyWecom && !/^https:\/\/qyapi\.weixin\.qq\.com\/cgi-bin\/webhook\/send\?key=[A-Za-z0-9-]{1,80}$/.test(notifyWecom)) errBox.textContent = "企业微信机器人地址不对头，要那种 qyapi.weixin.qq.com 开头的。";
+    else if (notifyTelegram && !/^-?\d{5,15}$/.test(notifyTelegram)) errBox.textContent = "Telegram chat_id 不对头，要纯数字。";
+    else if (notifyServerchan && !/^(SCT\d+[A-Za-z0-9]+|SCU\d{10,}[A-Za-z0-9]*)$/.test(notifyServerchan)) errBox.textContent = "Server酱 SendKey 不对头，SCT 或 SCU 开头。";
+    else if (notifyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(notifyEmail)) errBox.textContent = "邮箱不对头，看清楚格式嘛。";
+    else if (emailApiUrl && !EMAILAPIURL_RE.test(emailApiUrl)) errBox.textContent = "邮件 API 地址不对头，要 https:// 开头的。";
+    else if (emailApiKey && emailApiKey.length < 6) errBox.textContent = "邮件 API Key 不对头，re_ 开头的那种。";
+    else if (emailFrom && !EMAILFROM_RE.test(emailFrom)) errBox.textContent = "发件人不对头，填个邮箱或者「别名 <邮箱>」嘛。";
     else if (slugVal && !SLUG_RE.test(slugVal)) errBox.textContent = "后缀只准用英文小写字母、数字和短横杠，3 到 20 位哈。";
 
     if (errBox.textContent) {
@@ -303,6 +330,14 @@
         (errBox.textContent === "胃口莫太大，1000 块封顶了哈。" && $("#targetAmount")) ||
         (errBox.textContent === "叫啥子嘛，总得留个名字。" && $("#nickname")) ||
         (errBox.textContent === "BEP20 地址不对头，0x 开头 42 位，看清楚哈。" && $("#usdtBep20Address")) ||
+        (errBox.textContent === "PayPal 链接或邮箱不对头，看清楚哈。" && $("#paypalLink")) ||
+        (errBox.textContent === "企业微信机器人地址不对头，要那种 qyapi.weixin.qq.com 开头的。" && $("#notifyWecom")) ||
+        (errBox.textContent === "Telegram chat_id 不对头，要纯数字。" && $("#notifyTelegram")) ||
+        (errBox.textContent === "Server酱 SendKey 不对头，SCT 或 SCU 开头。" && $("#notifyServerchan")) ||
+        (errBox.textContent === "邮箱不对头，看清楚格式嘛。" && $("#notifyEmail")) ||
+        (errBox.textContent === "邮件 API 地址不对头，要 https:// 开头的。" && $("#emailApiUrl")) ||
+        (errBox.textContent === "邮件 API Key 不对头，re_ 开头的那种。" && $("#emailApiKey")) ||
+        (errBox.textContent === "发件人不对头，填个邮箱或者「别名 <邮箱>」嘛。" && $("#emailFrom")) ||
         (errBox.textContent === "后缀只准用英文小写字母、数字和短横杠，3 到 20 位哈。" && $("#slug"));
       if (errEl) {
         errEl.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -329,6 +364,15 @@
       usdtAddress: usdtAddress || undefined,
       usdtBep20Qr: uploads.usdt_bep20_qr || undefined,
       usdtBep20Address: usdtBep20Address || undefined,
+      paypalLink: paypalLink || undefined,
+      paypalQr: uploads.paypal_qr || undefined,
+      notifyWecom: notifyWecom || undefined,
+      notifyTelegram: notifyTelegram || undefined,
+      notifyServerchan: notifyServerchan || undefined,
+      notifyEmail: notifyEmail || undefined,
+      emailApiUrl: emailApiUrl || undefined,
+      emailApiKey: emailApiKey || undefined,
+      emailFrom: emailFrom || undefined,
       nickname,
       slug: slugVal || undefined,
       turnstileToken: (await ensureTurnstileToken()) || undefined,

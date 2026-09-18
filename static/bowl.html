@@ -69,6 +69,11 @@
           <div id="pending-section" class="hidden" style="margin-bottom:36px;">
             <h2 class="section-title">🗳 有人端饭过来了，等你放行 <small>放他过了才显示、才记账</small></h2>
             <div id="pending-list"></div>
+
+            <div id="rejected-section" class="hidden" style="margin-top:24px;">
+              <h2 class="section-title" style="font-size:20px;">🙅 遭你否了的 <small>嘴上说投了，其实没真转钱那种，记一哈免得再上当</small></h2>
+              <div id="rejected-list"></div>
+            </div>
           </div>
 
           <h2 class="section-title">看看哪些兄弟伙投过一口 <small id="r-count"></small></h2>
@@ -105,6 +110,7 @@
           <button type="button" class="pay-tab" data-pay="alipay">支付宝</button>
           <button type="button" class="pay-tab" data-pay="usdt">USDT(TRC20)</button>
           <button type="button" class="pay-tab" data-pay="usdt_bep20">USDT(BEP20)</button>
+          <button type="button" class="pay-tab" data-pay="paypal">PayPal</button>
         </div>
         <button class="btn btn-lg btn-primary" id="btn-next" style="width:100%;">下一步，看啷个投 →</button>
       </div>

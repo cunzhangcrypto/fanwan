@@ -31,7 +31,53 @@ export function yuanToCents(v) {
 }
 
 export function isValidPaymentMethod(m) {
-  return m === "wechat" || m === "alipay" || m === "usdt" || m === "usdt_bep20";
+  return m === "wechat" || m === "alipay" || m === "usdt" || m === "usdt_bep20" || m === "paypal";
+}
+
+// PayPal 收款：paypal.me / paypal.com 链接，或者邮箱
+export function isValidPayPalLink(u) {
+  if (typeof u !== "string") return false;
+  const s = u.trim();
+  if (!s || s.length > 128) return false;
+  if (/^https?:\/\/[a-z0-9.-]*(?:paypal\.me|paypal\.com)[a-zA-Z0-9/._?&=%-]*$/i.test(s)) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+}
+
+// 企业微信机器人 webhook：https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
+export function isValidWecomWebhook(u) {
+  return typeof u === "string" && /^https:\/\/qyapi\.weixin\.qq\.com\/cgi-bin\/webhook\/send\?key=[A-Za-z0-9-]{1,80}$/.test(u.trim());
+}
+
+// Telegram chat_id：纯数字或 -100 开头的群 id
+export function isValidTelegramChatId(s) {
+  return typeof s === "string" && /^-?\d{5,15}$/.test(s.trim());
+}
+
+// Server酱 SendKey：SCT + 32 位十六进制（兼容老式 SCU + 数字）
+export function isValidServerChanKey(s) {
+  return typeof s === "string" && /^(SCT\d+[A-Za-z0-9]+|SCU\d{10,}[A-Za-z0-9]*)$/.test(s.trim());
+}
+
+// 邮箱（通知用，宽松校验）
+export function isValidEmail(s) {
+  return typeof s === "string" && s.trim().length <= 128 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim());
+}
+
+// 邮件 API 地址（Resend 兼容 HTTP 发信接口）：必须 https 开头
+export function isValidEmailApiUrl(u) {
+  return typeof u === "string" && u.trim().length <= 200 && /^https:\/\/[^\s]+\.[^\s]{2,}$/.test(u.trim());
+}
+
+// 邮件 API Key（碗主人自己的，宽松校验：re_ 开头或任意非空字符）
+export function isValidEmailApiKey(k) {
+  return typeof k === "string" && k.trim().length >= 6 && k.trim().length <= 128;
+}
+
+// 发件人（可选）：纯邮箱，或「别名 <邮箱>」
+export function isValidEmailFrom(f) {
+  const s = f.trim();
+  if (s.length > 128) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s) || /^.{1,60}\s*<[^\s@]+@[^\s@]+\.[^\s@]{2,}>$/.test(s);
 }
 
 // BEP20 地址：0x + 40 位十六进制（总共 42 个字符）

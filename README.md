@@ -62,8 +62,11 @@
 ## ✨ 特性
 
 - 🍚 **摆饭碗儿**：写清楚想吃啥、为啥吃、想整多少钱、啷个收，甩个链接出去
-- 💰 **投一口**：看到微信/支付宝收款码或 USDT 地址（TRC20 / BEP20），自己去外面付款，回来报个到
+- 💰 **投一口**：看到微信/支付宝/USDT（TRC20 / BEP20）/ PayPal 收款码或地址，自己去外面付款，回来报个到
 - 📝 **投喂记录**：每个饭碗儿都有耿直人记录 + 排行榜（哪些兄弟伙最耿直）
+- 🔔 **留言提醒**：碗主人可配企业微信 / Telegram / Server酱 / 邮箱，有人留言第一时间喊你（异步推送，不拖慢投喂）
+- 🙅 **待放行 + 遭拒**：碗主人能看到"等放行"和"遭你否了的"（嘴上说投了没真转钱那种），记一哈免得再上当
+- 🍽️ **吃饱收摊**：首页底部折叠区单独收纳吃饱 / 饭凉了 / 收摊的碗，和"还没吃饭"的分开
 - 🛡️ **防刷**：Turnstile 人机验证 + 每 IP 每天只能摆一个饭碗儿（IP 只存哈希）
 - 🖼️ **OG 分享图**：每个饭碗儿自动生成 1200×630 分享图（微信/Telegram/X 都认）
 - 📱 **移动端**：原生 HTML/CSS/JS，零构建，手机上一样巴适
@@ -155,7 +158,7 @@ npm run dev
 
 ### 3. GitHub 仓库填 Secrets
 
-在自己 Fork 的仓库 → Settings → Secrets and variables → Actions → **New repository secret**，加 9 个：
+在自己 Fork 的仓库 → Settings → Secrets and variables → Actions → **New repository secret**，加下面这些（前 8 个必填，后 1 个通知可选）：
 
 | Secret 名 | 填啥子 |
 |---|---|
@@ -167,6 +170,10 @@ npm run dev
 | `TURNSTILE_SECRET_KEY` | Turnstile Secret Key |
 | `SERVER_SECRET` | 随便编一串乱码（IP 哈希盐） |
 | `ADMIN_KEY` | 随便编一串（后台钥匙） |
+| `TELEGRAM_BOT_TOKEN` | （可选）Telegram Bot Token，配了碗主人才能收电报提醒 |
+
+> 通知密钥不配也行：只是碗主人填了对应通知方式也发不出去，其余功能不受影响。
+> 邮箱提醒不需要部署者配任何密钥：邮件由碗主人自己在「编辑碗 → 留言提醒」里配自己的邮件 API（详见下文），走的是碗主人的额度。
 
 > `SITE_URL` 不用配：分享图链接自动取当前访问域名生成，绑自定义域名也自动正确。
 
@@ -187,10 +194,11 @@ npm run dev
 ## 🧑‍💻 命令行部署（进阶，作者/开发者用）
 
 ```bash
-# 1. 三个密钥（不要写进仓库）
+# 1. 密钥（不要写进仓库；后 1 个通知可选）
 wrangler secret put TURNSTILE_SECRET_KEY
 wrangler secret put SERVER_SECRET      # 随便一串随机字符，用于 IP 哈希
 wrangler secret put ADMIN_KEY          # 后台管理钥匙（Bearer Token）
+wrangler secret put TELEGRAM_BOT_TOKEN # （可选）电报提醒
 
 # 2. 同步线上表结构
 npm run db:remote
@@ -222,8 +230,27 @@ routes = [{ pattern = "fanwaner.example.com", custom_domain = true }]
 | `MAX_AMOUNT_YUAN` | `[vars]` | 金额上限（默认 1000 元） |
 | `MAX_UPLOAD_BYTES` | `[vars]` | 图片上传上限（默认 2MB） |
 | `R2_FONT_KEY` | `[vars]` | OG 字体在 R2 的 key |
+| `TELEGRAM_BOT_TOKEN` | Secret | （可选）Telegram Bot Token，碗主人填了 chat_id 才能收电报提醒 |
 
+> 通知四连（企业微信 / Telegram / Server酱 / 邮箱）里，企业微信、Server酱、邮箱都是碗主人自己配的（webhook / SendKey / 邮件 API），平台不用配密钥；只有 Telegram 需要部署者配上面的 Bot Token。
 > OG 图链接不需要 `SITE_URL`：`assets.js` 直接用当前请求域名拼，部署/绑域名都自动正确。
+
+## 📧 邮箱提醒（碗主人自配，平台零成本零额度）
+
+邮件不走平台的邮箱服务：由碗主人自己在「编辑碗 → 留言提醒」里填自己邮件服务的 API，平台只负责把通知 POST 给碗主人填的接口，消耗的是碗主人自己的额度，跟部署者莫得关系。
+
+推荐用 **Resend**（免费层够用，不用绑卡）：
+
+1. 注册 [resend.com](https://resend.com)，进 **API Keys** 建一个 Key（`re_` 开头）
+2. 在饭碗儿「编辑碗 → 留言提醒」里填：
+   - **收件邮箱**：想收到提醒的邮箱（QQ 邮箱等都行）
+   - **邮件 API 地址**：`https://api.resend.com/emails`（默认值）
+   - **邮件 API Key**：上一步建的 `re_xxx`
+   - **发件人**：可选，默认 `onboarding@resend.dev`；想用自己的域名发信，按 Resend 提示验证域名后填「别名 <邮箱>」格式
+3. 保存即可，之后有人在你碗儿头留言，就自动发一封邮件提醒
+
+> 也支持任何 Resend 兼容格式的 HTTP 邮件 API（自建服务也行），只要改「邮件 API 地址」。
+> API Key 是敏感信息：编辑时不会回显、接口也不会返回，不填就保留原来的。
 
 ## 🔌 API
 
@@ -232,11 +259,12 @@ routes = [{ pattern = "fanwaner.example.com", custom_domain = true }]
 | 接口 | 说明 |
 |---|---|
 | `GET /api/config` | 下发 Turnstile sitekey、金额上限等公开配置 |
-| `GET /api/bowl` | 饭碗儿列表（支持 `?status=&sort=&page=`） |
+| `GET /api/bowl` | 饭碗儿列表（支持 `?status=&sort=&page=`；status 可逗号多选，如 `completed,expired,hidden`） |
 | `POST /api/bowl` | 摆个饭碗儿（Turnstile + IP 日限 + 字段校验） |
 | `GET /api/bowl/:slug` | 饭碗儿详情（含已放行的投喂记录；状态懒更新：过期/吃饱） |
 | `PUT /api/bowl/:slug` | 改饭碗儿（需 editToken） |
-| `POST /api/donation` | 投一口（写入待审核） |
+| `GET /api/bowl/:slug/pending` | 自家待放行 + 遭拒投喂（需 `?token=editToken`，返回 `{ pending, rejected }`） |
+| `POST /api/donation` | 投一口（写入待审核；碗主人配了通知就异步推送） |
 | `DELETE /api/donation/:id` | 撤回自己的投喂（需 deleteToken，仅待审核可删） |
 | `POST /api/upload` | 图片上传到 R2（头像/收款码） |
 | `GET /api/admin/pending` | 后台：待审核投喂（Bearer ADMIN_KEY） |

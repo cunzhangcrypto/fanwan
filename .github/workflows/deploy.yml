@@ -26,7 +26,7 @@ jobs:
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
 
-      # 同步 D1 表结构（4 个迁移）
+      # 同步 D1 表结构（6 个迁移）
       - name: Apply D1 migrations (remote)
         uses: cloudflare/wrangler-action@v3
         with:
@@ -53,10 +53,12 @@ jobs:
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           SERVER_SECRET: ${{ secrets.SERVER_SECRET }}
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           echo "$TURNSTILE_SECRET_KEY" | npx wrangler secret put TURNSTILE_SECRET_KEY --name fanwaner
           echo "$SERVER_SECRET" | npx wrangler secret put SERVER_SECRET --name fanwaner
           echo "$ADMIN_KEY" | npx wrangler secret put ADMIN_KEY --name fanwaner
+          echo "$TELEGRAM_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN --name fanwaner
 
       # 部署 Worker
       - name: Deploy Worker

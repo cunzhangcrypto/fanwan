@@ -61,6 +61,7 @@
           <button type="button" class="pay-tab" data-pay="alipay">支付宝</button>
           <button type="button" class="pay-tab" data-pay="usdt">USDT(TRC20)</button>
           <button type="button" class="pay-tab" data-pay="usdt_bep20">USDT(BEP20)</button>
+          <button type="button" class="pay-tab" data-pay="paypal">PayPal</button>
         </div>
 
         <div id="pay-wechat" class="field hidden">
@@ -104,6 +105,17 @@
           <input type="text" id="usdtBep20Address" maxlength="42" placeholder="0x 开头的地址，看清楚哈。" autocomplete="off" spellcheck="false" />
           <div class="alert" style="margin-top:10px;">转之前看清楚哈，地址错了，饭碗儿也救不回来。</div>
         </div>
+
+        <div id="pay-paypal" class="field hidden">
+          <label>PayPal 收款链接或邮箱 <span class="hint">paypal.me 链接或者邮箱都行，选一个填</span></label>
+          <input type="text" id="paypalLink" maxlength="128" placeholder="比如：https://paypal.me/cunzhang 或 you@example.com" autocomplete="off" spellcheck="false" />
+          <label style="margin-top:14px;">PayPal 收款图 <span class="hint">有就传，莫得就算了</span></label>
+          <div class="upload-box" data-upload="paypal_qr">
+            <div class="thumb" data-thumb>＋</div>
+            <div class="tip"><strong>传一张 PayPal 收款码</strong>自动转成 webp，2MB 以内</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -118,13 +130,53 @@
       </div>
 
       <div class="field">
-        <label>头像 <span class="hint">可以不传</span></label>
-        <div class="upload-box" data-upload="avatar">
-          <div class="thumb" data-thumb>🍚</div>
-          <div class="tip"><strong>传个头像</strong>自动转成 webp，2MB 以内</div>
-          <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          <label>头像 <span class="hint">可以不传</span></label>
+          <div class="upload-box" data-upload="avatar">
+            <div class="thumb" data-thumb>🍚</div>
+            <div class="tip"><strong>传个头像</strong>自动转成 webp，2MB 以内</div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
         </div>
-      </div>
+
+        <details class="notify-box">
+          <summary>
+            🔔 留言提醒 <span class="hint">有人在你碗儿头留言了，第一时间喊你（可选）</span>
+            <span class="caret">▾</span>
+          </summary>
+          <div class="field">
+            <label for="notifyWecom">企业微信机器人 Webhook <span class="hint">微信群加「群机器人」后复制那个 webhook 地址</span></label>
+            <input type="text" id="notifyWecom" maxlength="200" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="notifyTelegram">Telegram chat_id <span class="hint">不用自己建机器人，平台内置机器人自动发。找 @userinfobot 查你的 chat_id；头一次用先给平台机器人发一句 /start，它才发得进来</span></label>
+            <input type="text" id="notifyTelegram" maxlength="20" placeholder="比如：123456789" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="notifyServerchan">Server酱 SendKey <span class="hint">sct.ftqq.com 申请，推到你个人微信</span></label>
+            <input type="text" id="notifyServerchan" maxlength="80" placeholder="SCT 开头的 SendKey" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="notify-email-box">
+            <p class="notify-email-title">📮 邮箱提醒 <span class="hint">分两半：上面填收信邮箱，下面配一个「发信通道」</span></p>
+            <div class="field">
+              <label for="notifyEmail">提醒发到哪个邮箱？<span class="hint">QQ / Gmail / 163 都行，这是收信方，莫得额外配置</span></label>
+              <input type="email" id="notifyEmail" maxlength="128" placeholder="you@example.com" autocomplete="off" spellcheck="false" />
+            </div>
+            <p class="notify-email-note">下面的「发信通道」：留言提醒的邮件是平台调一个邮件服务的接口帮你发的，不是拿你 QQ/Gmail 邮箱密码发的。推荐注册 <strong>resend.com</strong>（免费 100 封/天，不用绑卡）→ API Keys 建一个 re_ 开头的 Key 填下来就行。</p>
+            <div class="field">
+              <label for="emailApiUrl">发信通道 · API 地址 <span class="hint">用 Resend 的话，默认这个就行</span></label>
+              <input type="text" id="emailApiUrl" maxlength="200" placeholder="https://api.resend.com/emails" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="emailApiKey">发信通道 · API Key <span class="hint">Resend 后台建一个，re_ 开头。不填就不改</span></label>
+              <input type="password" id="emailApiKey" maxlength="128" placeholder="re_xxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="field">
+              <label for="emailFrom">发信通道 · 发件人 <span class="hint">可选，默认 onboarding@resend.dev</span></label>
+              <input type="text" id="emailFrom" maxlength="128" placeholder="饭碗儿 <onboarding@resend.dev>" autocomplete="off" spellcheck="false" />
+            </div>
+          </div>
+          <p class="hint" style="margin:10px 0 0;">四条路随便填哪条都行，也可以全填。留言一到，马上就喊你。这里头的信息只有你自己看得到，不会公开。</p>
+        </details>
 
       <div class="turnstile-wrap" id="turnstile-wrap"></div>
 

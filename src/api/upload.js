@@ -15,7 +15,7 @@ function isWebp(buf) {
   );
 }
 
-const KINDS = ["avatar", "wechat_qr", "alipay_qr", "usdt_qr", "usdt_bep20_qr"];
+const KINDS = ["avatar", "wechat_qr", "alipay_qr", "usdt_qr", "usdt_bep20_qr", "paypal_qr"];
 const RATE_LIMIT_PER_MINUTE = 5;
 
 export async function uploadImage(request, env) {

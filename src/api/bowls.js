@@ -6,6 +6,14 @@ import {
   isLocalImageUrl,
   isValidSlug,
   isValidBep20Address,
+  isValidPayPalLink,
+  isValidWecomWebhook,
+  isValidTelegramChatId,
+  isValidServerChanKey,
+  isValidEmail,
+  isValidEmailApiUrl,
+  isValidEmailApiKey,
+  isValidEmailFrom,
   RESERVED_SLUGS,
   LIMITS,
 } from "../lib/validate.js";
@@ -24,7 +32,11 @@ export async function handleConfig(env) {
 // GET /api/bowl?status=active&sort=newest|hottest|soonest&page=1&pageSize=10
 export async function listBowls(request, env) {
   const url = new URL(request.url);
-  const status = url.searchParams.get("status") || "active";
+  const statusParam = url.searchParams.get("status") || "active";
+  const statuses = statusParam
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => ["active", "completed", "expired", "hidden"].includes(s));
   const sort = url.searchParams.get("sort") || "newest";
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
   const pageSize = Math.min(
@@ -38,8 +50,9 @@ export async function listBowls(request, env) {
      WHERE status='active' AND deadline IS NOT NULL AND deadline < datetime('now')`
   ).run();
 
-  const where = status === "all" ? "" : "WHERE status = ?";
-  const params = status === "all" ? [] : [status];
+  const where =
+    statusParam === "all" ? "" : statuses.length ? `WHERE status IN (${statuses.map(() => "?").join(",")})` : "WHERE 0";
+  const params = statusParam === "all" ? [] : statuses;
 
   let orderBy = "created_at DESC";
   if (sort === "hottest") orderBy = "current_cents DESC";
@@ -71,6 +84,42 @@ export async function listBowls(request, env) {
     for (const r of d.results) donorMap[r.bowl_id] = Number(r.donors || 0);
   }
 
+  // 首页卡片动态留言：每碗最近 5 条已放行留言 + 没放行(pending)/遭拒(rejected)条数
+  const recentMessages = {};
+  const pendMap = {};
+  const rejMap = {};
+  if (ids.length) {
+    const ph = ids.map(() => "?").join(",");
+    const msgRes = await env.DB.prepare(
+      `SELECT bowl_id, nickname, message, is_anonymous FROM (
+         SELECT bowl_id, nickname, message, is_anonymous,
+                ROW_NUMBER() OVER (PARTITION BY bowl_id ORDER BY created_at DESC) rn
+         FROM donations
+         WHERE status = 'approved' AND bowl_id IN (${ph})
+       ) WHERE rn <= 5`
+    )
+      .bind(...ids)
+      .all();
+    for (const r of msgRes.results) {
+      (recentMessages[r.bowl_id] ||= []).push({
+        nickname: r.nickname,
+        message: r.message,
+        isAnonymous: !!r.is_anonymous,
+      });
+    }
+    const cntRes = await env.DB.prepare(
+      `SELECT bowl_id, status, COUNT(*) AS c FROM donations
+       WHERE status IN ('pending','rejected') AND bowl_id IN (${ph})
+       GROUP BY bowl_id, status`
+    )
+      .bind(...ids)
+      .all();
+    for (const r of cntRes.results) {
+      if (r.status === "pending") pendMap[r.bowl_id] = Number(r.c);
+      else rejMap[r.bowl_id] = Number(r.c);
+    }
+  }
+
   return ok({
     total: totalRes?.c || 0,
     page,
@@ -78,6 +127,9 @@ export async function listBowls(request, env) {
     items: rows.results.map((r) => ({
       ...formatBowl(r),
       donorCount: donorMap[r.id] || 0,
+      recentMessages: recentMessages[r.id] || [],
+      pendingCount: pendMap[r.id] || 0,
+      rejectedCount: rejMap[r.id] || 0,
     })),
   });
 }
@@ -135,6 +187,36 @@ export async function createBowl(request, env) {
   if (body.usdtBep20Qr && !isLocalImageUrl(body.usdtBep20Qr)) {
     return fail(ERR.VALIDATION_ERROR, "USDT BEP20 收款图没传对头。");
   }
+  if (body.paypalLink && !isValidPayPalLink(body.paypalLink)) {
+    return fail(ERR.VALIDATION_ERROR, "PayPal 收款链接或邮箱没填对头，paypal.me 链接或者邮箱都行。");
+  }
+  if (body.paypalQr && !isLocalImageUrl(body.paypalQr)) {
+    return fail(ERR.VALIDATION_ERROR, "PayPal 收款图没传对头。");
+  }
+
+  // 留言通知：四条路随便填哪条都行，莫填错格式了
+  if (body.notifyWecom && !isValidWecomWebhook(body.notifyWecom)) {
+    return fail(ERR.VALIDATION_ERROR, "企业微信机器人地址没填对头，要那种 https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key= 开头的。");
+  }
+  if (body.notifyTelegram && !isValidTelegramChatId(body.notifyTelegram)) {
+    return fail(ERR.VALIDATION_ERROR, "Telegram 的 chat_id 没填对头，数字才能用，比如 123456789。");
+  }
+  if (body.notifyServerchan && !isValidServerChanKey(body.notifyServerchan)) {
+    return fail(ERR.VALIDATION_ERROR, "Server酱的 SendKey 没填对头，SCT 或 SCU 开头的那个。");
+  }
+  if (body.notifyEmail && !isValidEmail(body.notifyEmail)) {
+    return fail(ERR.VALIDATION_ERROR, "邮箱没填对头，看清楚格式嘛。");
+  }
+  // 邮件走碗主人自己配的 HTTP 邮件 API：地址 + Key 是必配套，发件人可选
+  if (body.emailApiUrl && !isValidEmailApiUrl(body.emailApiUrl)) {
+    return fail(ERR.VALIDATION_ERROR, "邮件 API 地址没填对头，要 https:// 开头的。");
+  }
+  if (body.emailApiKey && !isValidEmailApiKey(body.emailApiKey)) {
+    return fail(ERR.VALIDATION_ERROR, "邮件 API Key 没填对头，re_ 开头的那种。");
+  }
+  if (body.emailFrom && !isValidEmailFrom(body.emailFrom)) {
+    return fail(ERR.VALIDATION_ERROR, "发件人没填对头，填个邮箱或者「别名 <邮箱>」嘛。");
+  }
 
   const avatarUrl = body.avatarUrl && isLocalImageUrl(body.avatarUrl) ? body.avatarUrl : "";
   let deadline = null;
@@ -179,8 +261,12 @@ export async function createBowl(request, env) {
         await env.DB.prepare(
           `INSERT INTO bowls
              (slug, user_id, title, want, reason, target_cents, deadline,
-              wechat_qr, alipay_qr, usdt_address, usdt_qr, usdt_bep20_address, usdt_bep20_qr, nickname, avatar_url, status, edit_token)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`
+              wechat_qr, alipay_qr, usdt_address, usdt_qr, usdt_bep20_address, usdt_bep20_qr,
+              paypal_link, paypal_qr,
+              notify_wecom, notify_telegram, notify_serverchan, notify_email,
+              email_api_url, email_api_key, email_from,
+              nickname, avatar_url, status, edit_token)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`
         )
           .bind(
             slug,
@@ -196,6 +282,15 @@ export async function createBowl(request, env) {
             body.usdtQr || "",
             body.usdtBep20Address ? body.usdtBep20Address.trim().toLowerCase() : "",
             body.usdtBep20Qr || "",
+            body.paypalLink ? body.paypalLink.trim() : "",
+            body.paypalQr || "",
+            body.notifyWecom ? body.notifyWecom.trim() : "",
+            body.notifyTelegram ? body.notifyTelegram.trim() : "",
+            body.notifyServerchan ? body.notifyServerchan.trim() : "",
+            body.notifyEmail ? body.notifyEmail.trim() : "",
+            body.emailApiUrl ? body.emailApiUrl.trim() : "",
+            body.emailApiKey ? body.emailApiKey.trim() : "",
+            body.emailFrom ? body.emailFrom.trim() : "",
             nickname,
             avatarUrl,
             editToken
@@ -302,6 +397,37 @@ export async function updateBowl(request, env, slug) {
   if (body.usdtBep20Qr && !isLocalImageUrl(body.usdtBep20Qr)) {
     return fail(ERR.VALIDATION_ERROR, "USDT BEP20 收款图没传对头。");
   }
+  if (body.paypalLink && !isValidPayPalLink(body.paypalLink)) {
+    return fail(ERR.VALIDATION_ERROR, "PayPal 收款链接或邮箱没填对头，paypal.me 链接或者邮箱都行。");
+  }
+  if (body.paypalQr && !isLocalImageUrl(body.paypalQr)) {
+    return fail(ERR.VALIDATION_ERROR, "PayPal 收款图没传对头。");
+  }
+  if (body.notifyWecom && !isValidWecomWebhook(body.notifyWecom)) {
+    return fail(ERR.VALIDATION_ERROR, "企业微信机器人地址没填对头，要那种 https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key= 开头的。");
+  }
+  if (body.notifyTelegram && !isValidTelegramChatId(body.notifyTelegram)) {
+    return fail(ERR.VALIDATION_ERROR, "Telegram 的 chat_id 没填对头，数字才能用，比如 123456789。");
+  }
+  if (body.notifyServerchan && !isValidServerChanKey(body.notifyServerchan)) {
+    return fail(ERR.VALIDATION_ERROR, "Server酱的 SendKey 没填对头，SCT 或 SCU 开头的那个。");
+  }
+  if (body.notifyEmail && !isValidEmail(body.notifyEmail)) {
+    return fail(ERR.VALIDATION_ERROR, "邮箱没填对头，看清楚格式嘛。");
+  }
+  // 邮件 API 三件套（碗主人自配）：地址 + Key 配套，发件人可选；Key 不填就保留原来的
+  if (body.emailApiUrl && !isValidEmailApiUrl(body.emailApiUrl)) {
+    return fail(ERR.VALIDATION_ERROR, "邮件 API 地址没填对头，要 https:// 开头的。");
+  }
+  if (body.emailApiKey && !isValidEmailApiKey(body.emailApiKey)) {
+    return fail(ERR.VALIDATION_ERROR, "邮件 API Key 没填对头，re_ 开头的那种。");
+  }
+  if (body.emailFrom && !isValidEmailFrom(body.emailFrom)) {
+    return fail(ERR.VALIDATION_ERROR, "发件人没填对头，填个邮箱或者「别名 <邮箱>」嘛。");
+  }
+  if (body.avatarUrl && !isLocalImageUrl(body.avatarUrl)) {
+    return fail(ERR.VALIDATION_ERROR, "头像没传对头。");
+  }
 
   let deadline = bowl.deadline;
   if (body.deadline) {
@@ -312,7 +438,11 @@ export async function updateBowl(request, env, slug) {
 
   await env.DB.prepare(
     `UPDATE bowls SET title=?, want=?, reason=?, target_cents=?, deadline=?,
-       wechat_qr=?, alipay_qr=?, usdt_address=?, usdt_qr=?, usdt_bep20_address=?, usdt_bep20_qr=?, nickname=?, updated_at=datetime('now')
+       wechat_qr=?, alipay_qr=?, usdt_address=?, usdt_qr=?, usdt_bep20_address=?, usdt_bep20_qr=?,
+       paypal_link=?, paypal_qr=?,
+       notify_wecom=?, notify_telegram=?, notify_serverchan=?, notify_email=?,
+       email_api_url=?, email_api_key=?, email_from=?,
+       nickname=?, avatar_url=?, updated_at=datetime('now')
      WHERE id=?`
   )
     .bind(
@@ -327,7 +457,17 @@ export async function updateBowl(request, env, slug) {
       body.usdtQr || bowl.usdt_qr,
       body.usdtBep20Address ? body.usdtBep20Address.trim().toLowerCase() : bowl.usdt_bep20_address,
       body.usdtBep20Qr || bowl.usdt_bep20_qr,
+      body.paypalLink ? body.paypalLink.trim() : bowl.paypal_link,
+      body.paypalQr || bowl.paypal_qr,
+      body.notifyWecom ? body.notifyWecom.trim() : bowl.notify_wecom,
+      body.notifyTelegram ? body.notifyTelegram.trim() : bowl.notify_telegram,
+      body.notifyServerchan ? body.notifyServerchan.trim() : bowl.notify_serverchan,
+      body.notifyEmail ? body.notifyEmail.trim() : bowl.notify_email,
+      body.emailApiUrl ? body.emailApiUrl.trim() : bowl.email_api_url,
+      body.emailApiKey ? body.emailApiKey.trim() : bowl.email_api_key,
+      body.emailFrom ? body.emailFrom.trim() : bowl.email_from,
       nickname,
+      body.avatarUrl || bowl.avatar_url,
       bowl.id
     )
     .run();
@@ -350,7 +490,14 @@ export async function getPendingDonations(request, env, slug) {
     `SELECT * FROM donations WHERE bowl_id = ? AND status = 'pending'
      ORDER BY created_at ASC`
   ).bind(bowl.id).all();
-  return ok({ items: rows.results.map(formatDonation) });
+  const rejected = await env.DB.prepare(
+    `SELECT * FROM donations WHERE bowl_id = ? AND status = 'rejected'
+     ORDER BY created_at DESC LIMIT 10`
+  ).bind(bowl.id).all();
+  return ok({
+    pending: rows.results.map(formatDonation),
+    rejected: rejected.results.map(formatDonation),
+  });
 }
 
 // 校验 edit_token + 这笔投喂确实是投到自家饭碗的

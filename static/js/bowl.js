@@ -21,7 +21,7 @@
     hidden: ["🍚 收摊了", "s-cold"],
   };
 
-  const PAY_LABEL = { wechat: "微信", alipay: "支付宝", usdt: "USDT(TRC20)", usdt_bep20: "USDT(BEP20)" };
+  const PAY_LABEL = { wechat: "微信", alipay: "支付宝", usdt: "USDT(TRC20)", usdt_bep20: "USDT(BEP20)", paypal: "PayPal" };
 
   /* ---------- 加载数据 ---------- */
   async function load() {
@@ -120,61 +120,86 @@
   async function renderPending(token) {
     const section = $("#pending-section");
     const list = $("#pending-list");
+    const rejSection = $("#rejected-section");
+    const rejList = $("#rejected-list");
     section.classList.remove("hidden");
     list.innerHTML = '<div class="spinner"></div>';
+    if (rejList) rejList.innerHTML = "";
     let items = [];
+    let rejected = [];
     try {
       const data = await get(`/api/bowl/${slug}/pending?token=${encodeURIComponent(token)}`);
-      items = data.items || [];
+      items = data.pending || [];
+      rejected = data.rejected || [];
     } catch (e) {
       list.innerHTML = `<p style="color:var(--muted);">${escapeHtml(e.message || "没拉到待放行的。")}</p>`;
       return;
     }
     if (!items.length) {
       list.innerHTML = '<div class="empty" style="padding:24px 20px;"><h2 style="font-size:18px;">现在没得待放行的。</h2><p style="margin-bottom:0;">干净得很。</p></div>';
-      return;
+    } else {
+      list.innerHTML = "";
+      items.forEach((d) => {
+        const el = document.createElement("div");
+        el.className = "record pending-record";
+        el.innerHTML = `
+          <div class="r-avatar">🍚</div>
+          <div class="r-main">
+            <div class="r-name">${escapeHtml(d.nickname)}<span class="amt" style="color:var(--gold-deep);">投了 ¥${yuan(d.amountYuan)}</span><small style="color:var(--muted);">${PAY_LABEL[d.paymentMethod] || d.paymentMethod}</small></div>
+            ${d.message ? `<div class="r-msg">“${escapeHtml(d.message)}”</div>` : ""}
+            <div class="r-time">${fmtTime(d.createdAt)}${d.txid ? ` · TXID：${escapeHtml(d.txid)}` : ""}</div>
+            <div class="pending-actions">
+              <button class="btn btn-sm btn-gold" data-act="approve" data-id="${d.id}">放他过</button>
+              <button class="btn btn-sm" data-act="reject" data-id="${d.id}">这个不行</button>
+            </div>
+          </div>`;
+        el.querySelector("[data-act='approve']").addEventListener("click", async (e) => {
+          const b = e.currentTarget;
+          b.disabled = true;
+          try {
+            await post(`/api/bowl/${slug}/approve`, { id: d.id, editToken: token });
+            toast("放他过了，饭钱记上了。");
+            load();
+          } catch (err) {
+            b.disabled = false;
+            toast(err.message || "没放行起。");
+          }
+        });
+        el.querySelector("[data-act='reject']").addEventListener("click", async (e) => {
+          const b = e.currentTarget;
+          b.disabled = true;
+          try {
+            await post(`/api/bowl/${slug}/reject`, { id: d.id, editToken: token });
+            toast("这口没要。");
+            renderPending(token);
+          } catch (err) {
+            b.disabled = false;
+            toast(err.message || "没操作起。");
+          }
+        });
+        list.appendChild(el);
+      });
     }
-    list.innerHTML = "";
-    items.forEach((d) => {
-      const el = document.createElement("div");
-      el.className = "record pending-record";
-      el.innerHTML = `
-        <div class="r-avatar">🍚</div>
-        <div class="r-main">
-          <div class="r-name">${escapeHtml(d.nickname)}<span class="amt" style="color:var(--gold-deep);">投了 ¥${yuan(d.amountYuan)}</span><small style="color:var(--muted);">${PAY_LABEL[d.paymentMethod] || d.paymentMethod}</small></div>
-          ${d.message ? `<div class="r-msg">“${escapeHtml(d.message)}”</div>` : ""}
-          <div class="r-time">${fmtTime(d.createdAt)}${d.txid ? ` · TXID：${escapeHtml(d.txid)}` : ""}</div>
-          <div class="pending-actions">
-            <button class="btn btn-sm btn-gold" data-act="approve" data-id="${d.id}">放他过</button>
-            <button class="btn btn-sm" data-act="reject" data-id="${d.id}">这个不行</button>
-          </div>
-        </div>`;
-      el.querySelector("[data-act='approve']").addEventListener("click", async (e) => {
-        const b = e.currentTarget;
-        b.disabled = true;
-        try {
-          await post(`/api/bowl/${slug}/approve`, { id: d.id, editToken: token });
-          toast("放他过了，饭钱记上了。");
-          load();
-        } catch (err) {
-          b.disabled = false;
-          toast(err.message || "没放行起。");
-        }
-      });
-      el.querySelector("[data-act='reject']").addEventListener("click", async (e) => {
-        const b = e.currentTarget;
-        b.disabled = true;
-        try {
-          await post(`/api/bowl/${slug}/reject`, { id: d.id, editToken: token });
-          toast("这口没要。");
-          renderPending(token);
-        } catch (err) {
-          b.disabled = false;
-          toast(err.message || "没操作起。");
-        }
-      });
-      list.appendChild(el);
-    });
+
+    // 遭拒的：一般就是嘴上说投了、其实没真转钱那种（莫放他过，也别个看不到）
+    if (rejSection && rejList) {
+      rejSection.classList.toggle("hidden", !rejected.length);
+      if (rejected.length) {
+        rejList.innerHTML = "";
+        rejected.forEach((d) => {
+          const el = document.createElement("div");
+          el.className = "record pending-record";
+          el.innerHTML = `
+            <div class="r-avatar">🙅</div>
+            <div class="r-main">
+              <div class="r-name">${escapeHtml(d.nickname)}<small style="color:var(--muted);">${PAY_LABEL[d.paymentMethod] || d.paymentMethod}</small></div>
+              ${d.message ? `<div class="r-msg">“${escapeHtml(d.message)}”</div>` : ""}
+              <div class="r-time">${fmtTime(d.createdAt)}</div>
+            </div>`;
+          rejList.appendChild(el);
+        });
+      }
+    }
   }
 
   /* ---------- 投喂记录 + 排行榜 ---------- */
@@ -253,7 +278,7 @@
       toast("这个饭碗儿已经收摊了，投不得喽。");
       return;
     }
-    const anyPay = bowl.wechatQr || bowl.alipayQr || bowl.usdtQr || bowl.usdtAddress || bowl.usdtBep20Qr || bowl.usdtBep20Address;
+    const anyPay = bowl.wechatQr || bowl.alipayQr || bowl.usdtQr || bowl.usdtAddress || bowl.usdtBep20Qr || bowl.usdtBep20Address || bowl.paypalQr || bowl.paypalLink;
     if (!anyPay) {
       toast("摆碗的兄弟伙还没留收款方式，先精神支持一哈。");
       return;
@@ -273,7 +298,11 @@
 
   $("#btn-next").addEventListener("click", () => {
     // 先检查这个方式到底留没留
-    const has = payMethod === "wechat" ? bowl.wechatQr : payMethod === "alipay" ? bowl.alipayQr : payMethod === "usdt" ? (bowl.usdtQr || bowl.usdtAddress) : (bowl.usdtBep20Qr || bowl.usdtBep20Address);
+    const has = payMethod === "wechat" ? bowl.wechatQr
+      : payMethod === "alipay" ? bowl.alipayQr
+      : payMethod === "usdt" ? (bowl.usdtQr || bowl.usdtAddress)
+      : payMethod === "usdt_bep20" ? (bowl.usdtBep20Qr || bowl.usdtBep20Address)
+      : (bowl.paypalQr || bowl.paypalLink);
     if (!has) { toast("摆碗的莫得留这个收款方式。"); return; }
     renderReportStep();
     showStep("report");
@@ -283,16 +312,30 @@
 
   function renderReportStep() {
     const isUsdt = payMethod === "usdt" || payMethod === "usdt_bep20";
+    const isPaypal = payMethod === "paypal";
     const usdtAddr = payMethod === "usdt" ? bowl.usdtAddress : bowl.usdtBep20Address;
     const usdtQr = payMethod === "usdt" ? bowl.usdtQr : bowl.usdtBep20Qr;
     reportUsdtAddr = usdtAddr || "";
-    $("#r-pay-title").textContent = isUsdt ? "有币的兄弟伙，也可以整一口。" : "扫嘛，莫客气。";
+    $("#r-pay-title").textContent = isUsdt ? "有币的兄弟伙，也可以整一口。" : isPaypal ? "PayPal 整一口，也阔以。" : "扫嘛，莫客气。";
     $("#r-pay-lead").textContent = "钱直接甩给摆碗的兄弟伙，饭碗儿这里只记一笔。";
-    $("#r-pay-now").textContent = isUsdt ? "转完了回来报个到。" : "扫完了记得回来报个到。";
+    $("#r-pay-now").textContent = isUsdt ? "转完了回来报个到。" : isPaypal ? "转完了回来报个到。" : "扫完了记得回来报个到。";
     // 有图显示图（微信/支付宝/USDT 都有图）；USDT 还可能有地址
-    $("#r-qr-box").classList.toggle("hidden", !((!isUsdt && (payMethod === "wechat" ? bowl.wechatQr : bowl.alipayQr)) || (isUsdt && usdtQr)));
+    $("#r-qr-box").classList.toggle("hidden", !((!isUsdt && !isPaypal && (payMethod === "wechat" ? bowl.wechatQr : bowl.alipayQr)) || (isUsdt && usdtQr) || (isPaypal && (bowl.paypalQr || bowl.paypalLink))));
     $("#r-usdt-box").classList.toggle("hidden", !(isUsdt && usdtAddr));
     $("#rd-txid-field").classList.toggle("hidden", !isUsdt);
+
+    if (isPaypal) {
+      $("#r-usdt-box").classList.add("hidden");
+      const qr = bowl.paypalQr;
+      const link = bowl.paypalLink || "";
+      let html = "";
+      if (qr) html += `<img src="${qr}" alt="PayPal收款码" /><p class="qr-tip" style="margin-top:10px;">扫起，扫码就是干。</p>`;
+      if (link) html += `<div class="addr-box" style="margin-top:12px;word-break:break-all;">${escapeHtml(link)}</div><button class="btn btn-sm" id="btn-copy-paypal">复制 PayPal 链接</button>`;
+      $("#r-qr-box").innerHTML = html || `<p class="qr-tip">莫得收款码图片，也莫得链接……</p>`;
+      const copyBtn = $("#btn-copy-paypal");
+      if (copyBtn) copyBtn.addEventListener("click", async () => { await copyText(link); toast("PayPal 链接已经抄到起了。"); });
+      return;
+    }
 
     if (isUsdt) {
       $("#r-usdt-net").textContent = payMethod === "usdt" ? "链：TRC20（T 开头）" : "链：BEP20（币安智能链）";
