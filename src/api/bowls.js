@@ -459,13 +459,14 @@ export async function updateBowl(request, env, slug) {
       body.usdtBep20Qr || bowl.usdt_bep20_qr,
       body.paypalLink ? body.paypalLink.trim() : bowl.paypal_link,
       body.paypalQr || bowl.paypal_qr,
-      body.notifyWecom ? body.notifyWecom.trim() : bowl.notify_wecom,
-      body.notifyTelegram ? body.notifyTelegram.trim() : bowl.notify_telegram,
-      body.notifyServerchan ? body.notifyServerchan.trim() : bowl.notify_serverchan,
-      body.notifyEmail ? body.notifyEmail.trim() : bowl.notify_email,
-      body.emailApiUrl ? body.emailApiUrl.trim() : bowl.email_api_url,
-      body.emailApiKey ? body.emailApiKey.trim() : bowl.email_api_key,
-      body.emailFrom ? body.emailFrom.trim() : bowl.email_from,
+      // 留言提醒：字段没传才保留旧值；传了空串（用户删了）就真清空
+      body.notifyWecom === undefined ? bowl.notify_wecom : (body.notifyWecom || "").trim(),
+      body.notifyTelegram === undefined ? bowl.notify_telegram : (body.notifyTelegram || "").trim(),
+      body.notifyServerchan === undefined ? bowl.notify_serverchan : (body.notifyServerchan || "").trim(),
+      body.notifyEmail === undefined ? bowl.notify_email : (body.notifyEmail || "").trim(),
+      body.emailApiUrl === undefined ? bowl.email_api_url : (body.emailApiUrl || "").trim(),
+      body.emailApiKey ? body.emailApiKey.trim() : bowl.email_api_key, // key 不回显，空/未传都保留原 key
+      body.emailFrom === undefined ? bowl.email_from : (body.emailFrom || "").trim(),
       nickname,
       body.avatarUrl || bowl.avatar_url,
       bowl.id
